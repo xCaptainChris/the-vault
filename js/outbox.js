@@ -188,11 +188,13 @@ export function createOutbox(deps) {
       persist();
       try {
         const res = await deps.api.call(op.action, { ...op.body, token: op.token });
+        // Fold the server's answer into the snapshot BEFORE dropping the op, so the very next
+        // render (from persist) already shows the saved row — no blink back to the old value.
+        if (deps.onSent) { try { deps.onSent(op, res); } catch (e) { /* never block the queue */ } }
         const i = ops.indexOf(op);
         if (i >= 0) ops.splice(i, 1);
         sent++;
         persist();
-        if (deps.onSent) deps.onSent(op, res);
       } catch (e) {
         const code = (e && e.code) || 'NETWORK';
         if (code === 'NETWORK' || code === 'BUSY') {

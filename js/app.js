@@ -22,7 +22,8 @@ import { refreshApprovals } from './ui/approvals.js';
 import { refreshTithe } from './ui/tithe.js';
 import { refreshFamily } from './ui/family.js';
 import { refreshDonut } from './ui/donut.js';
-import { initWho, openWho, refreshWho, showDeviceModal } from './ui/who.js';
+import { initWho, openWho, refreshWho, showDeviceModal, signOut } from './ui/who.js';
+import { initLock, lockNow, forgetPin } from './ui/lock.js';
 import { openAccount, openSettings, refreshSettings } from './ui/settings.js';
 
 /* ---------------- outbox ---------------- */
@@ -45,6 +46,7 @@ const outbox = createOutbox({
 store.setOutbox(outbox);
 
 function sessionLost() {
+  forgetPin();
   identity.setSession(null);
   identity.setUser(null);
   closeSheets(false, true);
@@ -72,7 +74,7 @@ function render() {
   const fab = byId('fab');
   fab.hidden = !u;
   const parent = identity.isParent;
-  fab.textContent = parent ? '＋ Entry' : '＋ Ask';
+  fab.textContent = parent ? '＋ Add / Spend' : '＋ Ask';
   fab.classList.toggle('request', !parent);
 
   refreshEntry(); refreshApprovals(); refreshTithe(); refreshFamily(); refreshDonut(); refreshSettings(); refreshWho();
@@ -83,6 +85,7 @@ router.onChange(() => render());
 /* ---------------- wiring ---------------- */
 initSheets();
 initWho({ onUserChanged: () => store.emit() });
+initLock({ onSwitchUser: () => signOut(), onSignedOut: (msg) => signOut(msg) });
 byId('fab').addEventListener('click', openEntryNew);
 byId('backBtn').addEventListener('click', () => router.go('#/'));
 byId('acctBtn').addEventListener('click', () => (identity.user ? openAccount() : openWho()));
@@ -136,4 +139,5 @@ render();
 registerServiceWorker((apply) => snackbar('Update ready', { action: 'Reload', onAction: apply, ms: Infinity }));
 if (!identity.device.name) showDeviceModal(false);
 else if (!identity.user || (identity.user.role === 'parent' && !identity.session)) openWho();
+else lockNow();                       // parents re-enter their PIN every time the app opens (no-op for kids)
 store.refresh().then(() => { outbox.drain(); checkSession(); });

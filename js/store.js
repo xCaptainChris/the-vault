@@ -10,6 +10,7 @@ let view = null;
 let outbox = null;
 const subs = new Set();
 let refreshing = null;
+let writeSeq = 0;            // bumps whenever a write lands on the server
 
 function recompute() {
   view = overlay(snapshot || EMPTY, outbox ? outbox.raw() : []);
@@ -36,7 +37,15 @@ export const store = {
     if (refreshing) return refreshing;
     refreshing = (async () => {
       try {
-        const data = await api.load();
+        // A load that started before a write landed can return pre-write data; if a write
+        // landed while we were loading, throw that result away and load again.
+        let data, seq;
+        for (let tries = 0; tries < 3; tries++) {
+          seq = writeSeq;
+          data = await api.load();
+          if (seq === writeSeq) break;
+        }
+        if (seq !== writeSeq) return false;
         snapshot = {
           kids: data.kids || [], parents: data.parents || [], categories: data.categories || [],
           transactions: data.transactions || [], settlements: data.settlements || [],
@@ -57,6 +66,7 @@ export const store = {
 
   // Merge an op's response into the snapshot so nothing flickers before the next refresh.
   mergeResult(op, res) {
+    writeSeq++;
     if (!snapshot || !res) return;
     if (Array.isArray(res.txs)) upsertRows(snapshot.transactions, res.txs);
     if (res.kid) upsertRows(snapshot.kids, [res.kid]);

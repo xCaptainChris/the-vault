@@ -112,7 +112,7 @@ export function digitalSpend(v, kidId, days, now = Date.now()) {
   });
   return total;
 }
-export const hasDigital = (v, kidId) => v.transactions.some(t => t.kidId === kidId && t.category === 'Digital');
+export const hasDigital = (v, kidId) => v.transactions.some(t => isApproved(t) && t.kidId === kidId && t.category === 'Digital' && t.amountCents < 0);
 
 // Up to 6 distinct (note, category, amount) from approved history in this direction, newest first.
 // Falls back to all kids when this kid has none. Tithing rows are never suggested.

@@ -81,6 +81,12 @@ const APPLY = {
     if (!row) { row = { id: k.id, goalName: '', goalCents: 0 }; view.kids.push(row); }
     Object.assign(row, { name: k.name, color: k.color, emoji: k.emoji, archived: !!k.archived, _pending: true });
   },
+  setAvatar(view, op) {
+    const row = view.kids.find(x => x.id === op.body.kidId);
+    if (!row) return;
+    row.avatar = op.body.avatar || '';
+    row._pending = true;
+  },
   setEmoji(view, op) {
     const row = view.kids.find(x => x.id === op.body.kidId);
     if (!row) return;

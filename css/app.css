@@ -365,3 +365,90 @@ html.app-locked .fab { display: none; }
 .iconbtn:active { filter: brightness(1.35); border-color: var(--muted); }
 .bankcard:active { transform: scale(.985); }
 .menu-btn:active, .toggle:active { filter: brightness(1.15); }
+
+/* ---- v1.0.4: history card, reasons, icon picker, still page ---- */
+.txrow.denied .txdesc, .txrow.denied .txmeta { opacity: .6; }
+.txrow.denied .txamt { opacity: .5; text-decoration: line-through; }
+.deniedtag { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--debit); text-transform: uppercase; }
+.notetag { font-size: 11px; }
+
+/* Small card that pops up over the page (all screen sizes). */
+.sheet.popcard {
+  left: 50%; right: auto; bottom: auto; top: calc(env(safe-area-inset-top) + 10dvh);
+  width: min(440px, calc(100% - 32px)); max-height: 80dvh; margin: 0;
+  border-radius: 22px; border: 1px solid var(--line); padding: 18px 18px 16px;
+  transform: translateX(-50%) translateY(12px) scale(.97); opacity: 0;
+  transition: transform .22s cubic-bezier(.32,.72,0,1), opacity .18s ease, visibility 0s linear .22s;
+  box-shadow: 0 24px 60px rgba(0,0,0,.55);
+}
+.sheet.popcard.show { transform: translateX(-50%) translateY(0) scale(1); opacity: 1; }
+@media (min-width: 820px) { .sheet.popcard { top: 14dvh; } }
+.cardx { position: absolute; top: 6px; right: 6px; width: 40px; height: 40px; border-radius: 12px; color: var(--muted); font-size: 16px; z-index: 1; }
+.txcard { display: flex; flex-direction: column; }
+.cardhead { display: flex; align-items: center; gap: 12px; padding-right: 36px; }
+.cardicon { width: 46px; height: 46px; border-radius: 14px; background: var(--raised); display: grid; place-items: center; font-size: 22px; flex-shrink: 0; }
+.cardtitle { min-width: 0; }
+.cardtitle .ct1 { font-weight: 700; font-size: 17px; overflow-wrap: anywhere; }
+.cardtitle .ct2 { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.cardamt { font-size: 34px; font-weight: 800; margin: 14px 0 6px; }
+.cardamt.in { color: var(--credit); } .cardamt.out { color: var(--debit); }
+.cardamt.struck { text-decoration: line-through; opacity: .55; }
+.cardstatus { align-self: flex-start; width: fit-content; font-size: 12px; font-weight: 800; letter-spacing: .5px; padding: 5px 11px; border-radius: 99px; margin-bottom: 12px; }
+.cardstatus.ok { background: rgba(76,217,100,.15); color: var(--credit); }
+.cardstatus.no { background: rgba(255,107,94,.15); color: var(--debit); }
+.cardstatus.wait { background: rgba(0,210,255,.13); color: var(--accent); }
+.cardstatus.void { background: var(--raised); color: var(--muted); }
+.cardinfo { border-top: 1px solid var(--line); }
+.cardrow { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.cardrow .cl { color: var(--muted); }
+.cardrow .cv { text-align: right; font-weight: 600; overflow-wrap: anywhere; }
+.cardrow .muted { color: var(--muted); font-weight: 500; }
+.cardreason { margin-top: 12px; padding: 12px 14px; border-radius: 14px; background: var(--raised); font-size: 15px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+.cardreason .rq { color: var(--muted); }
+.cardid { margin-top: 12px; font-size: 11px; color: var(--muted); text-align: center; }
+.cardlink { margin-top: 8px; align-self: center; font-size: 14px; }
+.txcard .txactions { justify-content: center; margin-top: 14px; }
+.txcard .locked { margin-top: 12px; text-align: center; color: var(--muted); font-size: 13px; font-weight: 600; }
+
+/* Reason box (approve / deny) */
+.reasonbox { margin-top: 12px; }
+.reason-chips { margin-bottom: 8px; }
+.chip-btn.small { font-size: 13px; padding: 6px 12px; }
+.btn-deny-go { flex: 1; padding: 11px; border-radius: 12px; font-weight: 700; font-size: 14px; background: var(--debit); color: #0c0c10; }
+.btn-no.plain { color: var(--muted); }
+.apcard.denying { border-color: rgba(255,107,94,.5); }
+.linkbtn.addnote { display: block; margin: 6px auto 0; font-size: 13px; }
+
+/* Icon picker */
+.hero .labelbtn { display: inline-flex; align-items: center; gap: 8px; padding: 4px 14px 4px 8px; border-radius: 99px; background: rgba(0,0,0,.12); color: inherit; font: inherit; letter-spacing: 2px; text-transform: uppercase; font-size: 12px; font-weight: 700; opacity: .85; }
+.hero .labelbtn .heroemoji { font-size: 20px; letter-spacing: 0; }
+.emojigrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.emojibtn { aspect-ratio: 1; font-size: 28px; border-radius: 14px; background: var(--raised); border: 2px solid transparent; display: grid; place-items: center; }
+.emojibtn.sel { border-color: var(--accent); }
+.emojibtn:active { transform: scale(.92); }
+
+/* Phones: on a kid's page the page holds still and only History scrolls. */
+@media (max-width: 1023px) and (min-height: 640px) {
+  html.kid-page, html.kid-page body { height: 100%; overflow: hidden; }
+  html.kid-page .wrap { height: 100dvh; display: flex; flex-direction: column; padding-bottom: 0; }
+  html.kid-page header.app { flex: none; }
+  html.kid-page #view-kid.active { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  html.kid-page #view-kid .back { flex: none; align-self: flex-start; }
+  html.kid-page .kidgrid { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  html.kid-page .colleft { flex: none; }
+  html.kid-page .colright { flex: 1; min-height: 0; display: flex; flex-direction: column; padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+  html.kid-page .colright .flabel { flex: none; margin-top: 2px; }
+  html.kid-page .ledger { flex: 1; min-height: 0; max-height: none; }
+  html.kid-page .ledger::after { content: ''; display: block; height: 76px; }   /* last row clears the button */
+  html.kid-page .hero { padding: 18px 20px; }
+  html.kid-page .split { margin-bottom: 10px; }
+}
+
+/* Tithing: per-kid pay buttons, kid pill */
+.legrow.titherow { gap: 10px; }
+.legrow.titherow .lval { width: auto; }
+.paybtn { min-height: 42px; padding: 0 12px; border-radius: 10px; font-weight: 700; font-size: 13px; background: var(--raised); border: 1px solid var(--line); color: var(--tithe); white-space: nowrap; }
+.paybtn.armed { background: var(--tithe); color: #0c0c10; }
+.pill.tithepill { background: rgba(126,166,255,.10); border-color: rgba(126,166,255,.4); color: #cddcff; }
+.pill.tithepill.paid { background: rgba(76,217,100,.08); border-color: rgba(76,217,100,.35); color: #c8f5d0; }
+.paidtag { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--credit); text-transform: uppercase; }

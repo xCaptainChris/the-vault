@@ -13,7 +13,7 @@
  * Behaviour mirrors js/api/mock-server.js — change both together.
  */
 
-var SCHEMA = 2;
+var SCHEMA = 3;
 var TITHE_PCT = 10;
 var MAX_CENTS = 1000000;
 var LOCK_MAX = 5;
@@ -24,7 +24,7 @@ var DATE_FMT = 'yyyy-mm-dd hh:mm';
 
 var TABS = {
   Transactions: ['ID', 'Timestamp', 'Child', 'Amount', 'Category', 'Note', 'Status', 'DeviceID', 'DeviceName', 'ActedBy',
-    'Settled', 'User', 'KidID', 'Role', 'ClientTime', 'ActedAt', 'ActedDeviceName', 'EditedBy', 'EditedAt', 'GroupID', 'SettleID'],
+    'Settled', 'User', 'KidID', 'Role', 'ClientTime', 'ActedAt', 'ActedDeviceName', 'EditedBy', 'EditedAt', 'GroupID', 'SettleID', 'Reason'],
   Kids: ['Name', 'Color', 'Goal Name', 'Goal Amount', 'KidID', 'Emoji', 'Archived'],
   Parents: ['Name', 'PIN', 'ParentID'],
   Categories: ['Name', 'Emoji', 'Color', 'Direction', 'Active'],
@@ -224,7 +224,7 @@ function diag_() {
 var PARENT_ONLY = { setStatus: 1, update: 1, settleTithing: 1, upsertKid: 1 };
 var ACTIONS = {
   login: login_, whoami: whoami_, logout: logout_, add: add_, setStatus: setStatus_, update: update_,
-  settleTithing: settleTithing_, upsertKid: upsertKid_, setGoal: setGoal_,
+  settleTithing: settleTithing_, upsertKid: upsertKid_, setGoal: setGoal_, setEmoji: setEmoji_,
 };
 
 function doPost(e) {
@@ -428,7 +428,7 @@ function add_(b, s) {
       amountCents: t.amountCents, category: t.category, note: str_(t.note, 80), status: status, user: actor.name, role: actor.role,
       deviceId: str_(b.deviceId, 64), deviceName: str_(b.deviceName, 60),
       actedBy: s ? s.name : '', actedAt: s ? now.toISOString() : '', actedDeviceName: s ? str_(b.deviceName, 60) : '',
-      editedBy: '', editedAt: '', settledAt: '', settleId: '', groupId: str_(t.groupId, 64),
+      editedBy: '', editedAt: '', settledAt: '', settleId: '', groupId: str_(t.groupId, 64), reason: '',
     };
     appendObj_(sh, txToRow_(tx));
     out.push(tx);
@@ -453,15 +453,18 @@ function setStatus_(b, s) {
   var sh = sheet_('Transactions');
   var map = colMap_(sh);
   var now = new Date();
+  var reason = str_(b.reason, 140);                 // optional "why", shown to the kid
   var updated = [], skipped = [];
   group.forEach(function (r) {
     if (r.tx.status !== from) return;
     if (r.tx.settledAt) { skipped.push(r.tx.id); return; }
-    setCells_(sh, map, r.rowNum, { Status: target, ActedBy: s.name, ActedAt: now, ActedDeviceName: str_(b.deviceName, 60) });
+    setCells_(sh, map, r.rowNum, { Status: target, ActedBy: s.name, ActedAt: now, ActedDeviceName: str_(b.deviceName, 60), Reason: reason });
     var before = r.tx.status;
-    r.tx.status = target; r.tx.actedBy = s.name; r.tx.actedAt = now.toISOString(); r.tx.actedDeviceName = str_(b.deviceName, 60);
+    r.tx.status = target; r.tx.actedBy = s.name; r.tx.actedAt = now.toISOString(); r.tx.actedDeviceName = str_(b.deviceName, 60); r.tx.reason = reason;
     updated.push(r.tx);
-    audit_('setStatus', r.tx.id, { name: s.name, role: 'parent' }, b, { before: before, after: target });
+    var det = { before: before, after: target };
+    if (reason) det.reason = reason;
+    audit_('setStatus', r.tx.id, { name: s.name, role: 'parent' }, b, det);
   });
   return { ok: true, txs: updated, skipped: skipped };
 }
@@ -616,6 +619,25 @@ function readKids_() {
   return out;
 }
 
+// A kid may change their own emoji (no money involved); parents may change any.
+function setEmoji_(b, s) {
+  if (!s && !(b.user && b.user.role === 'kid' && b.user.id === b.kidId)) {
+    audit_('auth_reject', b.kidId || '', { name: str_(b.user && b.user.name, 40), role: 'kid' }, b, { action: 'setEmoji', reason: b.token ? 'bad token' : 'not own icon' });
+    return err_('AUTH', 'Parent sign-in needed');
+  }
+  var emoji = String(b.emoji == null ? '' : b.emoji).trim();
+  if (emoji.length > 16) return err_('BAD_INPUT', 'Emoji too long');
+  var kid = null;
+  readKids_().forEach(function (x) { if (x.id === b.kidId) kid = x; });
+  if (!kid) return err_('NOT_FOUND', 'Kid not found');
+  var t = table_('Kids');
+  var before = kid.emoji;
+  setCells_(t.sheet, t.map, kid.rowNum, { Emoji: emoji });
+  kid.emoji = emoji;
+  audit_('setEmoji', kid.id, s ? { name: s.name, role: 'parent' } : { name: kid.name, role: 'kid' }, b, { before: before, after: emoji });
+  return { ok: true, kid: publicKid_(kid) };
+}
+
 function publicKid_(k) {
   return { id: k.id, name: k.name, color: k.color, emoji: k.emoji, goalName: k.goalName, goalCents: k.goalCents, archived: k.archived };
 }
@@ -677,7 +699,7 @@ function rowToTx_(map, row) {
     category: s('Category'), note: s('Note'), status: s('Status') || 'approved', user: s('User'), role: s('Role'),
     deviceId: s('DeviceID'), deviceName: s('DeviceName'), actedBy: s('ActedBy'), actedAt: iso_(g('ActedAt')),
     actedDeviceName: s('ActedDeviceName'), editedBy: s('EditedBy'), editedAt: iso_(g('EditedAt')),
-    settledAt: iso_(g('Settled')), settleId: s('SettleID'), groupId: s('GroupID'),
+    settledAt: iso_(g('Settled')), settleId: s('SettleID'), groupId: s('GroupID'), reason: s('Reason'),
   };
 }
 
@@ -686,7 +708,7 @@ function txToRow_(t) {
     ID: t.id, Timestamp: new Date(t.ts), Child: t.kidName, Amount: t.amountCents / 100, Category: t.category, Note: t.note,
     Status: t.status, DeviceID: t.deviceId, DeviceName: t.deviceName, ActedBy: t.actedBy, Settled: '', User: t.user,
     KidID: t.kidId, Role: t.role, ClientTime: new Date(t.clientTime), ActedAt: t.actedAt ? new Date(t.actedAt) : '',
-    ActedDeviceName: t.actedDeviceName, EditedBy: '', EditedAt: '', GroupID: t.groupId, SettleID: '',
+    ActedDeviceName: t.actedDeviceName, EditedBy: '', EditedAt: '', GroupID: t.groupId, SettleID: '', Reason: '',
   };
 }
 

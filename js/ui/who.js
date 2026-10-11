@@ -7,6 +7,7 @@ import { api } from '../api/index.js';
 import { isDemo } from '../env.js';
 import * as S from '../selectors.js';
 import { router } from '../router.js';
+import { rememberPin, forgetPin } from './lock.js';
 
 let hooks = { onUserChanged: () => {} };
 export function initWho(h2) { hooks = { ...hooks, ...h2 }; wire(); }
@@ -70,6 +71,7 @@ function leaveParent() {
 }
 
 function chooseKid(k) {
+  if (identity.session) forgetPin();
   leaveParent();
   identity.setUser({ role: 'kid', id: k.id, name: k.name, emoji: k.emoji || '' });
   hooks.onUserChanged();
@@ -106,6 +108,7 @@ async function submitPin() {
     if (!(prev && prev.role === 'parent' && prev.id === res.parent.id)) leaveParent();
     identity.setSession({ token: res.token, parent: res.parent });
     identity.setUser({ role: 'parent', id: res.parent.id, name: res.parent.name });
+    await rememberPin(res.parent.id, pin);
     store.outbox.reauth(res.parent.id, res.token);
     closePin();
     closeSheets(false, true);
@@ -124,12 +127,13 @@ async function submitPin() {
   }
 }
 
-export function signOut() {
+export function signOut(message) {
   leaveParent();
+  forgetPin();
   identity.setUser(null);
   hooks.onUserChanged();
   router.go('#/');
-  openWho();
+  openWho(message);
 }
 
 function wire() {

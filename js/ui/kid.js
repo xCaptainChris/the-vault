@@ -4,7 +4,7 @@ import * as S from '../selectors.js';
 import { identity } from '../identity.js';
 import { renderLedger } from './ledger.js';
 import { openDonut } from './donut.js';
-import { openGoal } from './goal.js';
+import { openGoal, canEditGoal } from './goal.js';
 import { maybeCelebrate } from './celebrate.js';
 
 let currentKid = null;
@@ -30,7 +30,7 @@ export function renderKid(view, kidId) {
       h('div', { class: 'track' }, h('div', { class: 'fill', style: { width: g.pct + '%' } }))));
     if (g.reached) hero.append(h('div', { class: 'goalreached', testid: 'goal-reached' }, '🎉 Goal reached'));
   }
-  if (parent) {
+  if (canEditGoal(k.id)) {
     hero.append(h('div', {}, h('button', { class: 'goalbtn', testid: 'goal-edit-btn', onclick: () => openGoal(k.id) },
       '✎ ' + (g.has ? 'Edit goal' : 'Set goal'))));
   }

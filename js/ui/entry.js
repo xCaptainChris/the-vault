@@ -56,7 +56,7 @@ function build() {
   const body = byId('entrySheet').querySelector('.body');
   body.innerHTML = '';
   const edit = st.mode === 'edit';
-  const title = edit ? (st.orig.status === 'pending' ? 'Review request' : 'Edit entry') : (parent ? 'New entry' : 'Ask for money');
+  const title = edit ? (st.orig.status === 'pending' ? 'Review request' : 'Edit entry') : (parent ? 'Money in or out' : 'Ask for money');
   els = {};
   els.kids = h('div', { class: 'chips', testid: 'entry-kids' });
   els.dir = h('div', { class: 'seg', testid: 'entry-dir' },

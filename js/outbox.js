@@ -40,7 +40,7 @@ const APPLY = {
     if (t.status !== from) return;
     const rows = t.groupId ? view.transactions.filter(x => x.groupId === t.groupId) : [t];
     rows.forEach(r => {
-      if (r.status === from && !r.settledAt) patchTx(view, r.id, x => { x.status = target; x.actedBy = op.body.user ? op.body.user.name : ''; });
+      if (r.status === from && !r.settledAt) patchTx(view, r.id, x => { x.status = target; x.actedBy = op.body.user ? op.body.user.name : ''; x.actedAt = op.createdAt; x.reason = op.body.reason || ''; });
     });
   },
   update(view, op) {
@@ -80,6 +80,12 @@ const APPLY = {
     let row = view.kids.find(x => x.id === k.id);
     if (!row) { row = { id: k.id, goalName: '', goalCents: 0 }; view.kids.push(row); }
     Object.assign(row, { name: k.name, color: k.color, emoji: k.emoji, archived: !!k.archived, _pending: true });
+  },
+  setEmoji(view, op) {
+    const row = view.kids.find(x => x.id === op.body.kidId);
+    if (!row) return;
+    row.emoji = op.body.emoji || '';
+    row._pending = true;
   },
   setGoal(view, op) {
     const row = view.kids.find(x => x.id === op.body.kidId);

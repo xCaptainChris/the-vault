@@ -19,11 +19,12 @@ import { renderHome } from './ui/home.js';
 import { renderKid } from './ui/kid.js';
 import { openEntryNew, refreshEntry } from './ui/entry.js';
 import { refreshApprovals } from './ui/approvals.js';
-import { refreshTithe } from './ui/tithe.js';
+import { refreshTithe, initKidTithe } from './ui/tithe.js';
 import { refreshFamily } from './ui/family.js';
 import { refreshDonut } from './ui/donut.js';
 import { initWho, openWho, refreshWho, showDeviceModal, signOut } from './ui/who.js';
 import { initLock, lockNow, forgetPin } from './ui/lock.js';
+import { refreshTxCard, initTxCard } from './ui/txcard.js';
 import { openAccount, openSettings, refreshSettings } from './ui/settings.js';
 
 /* ---------------- outbox ---------------- */
@@ -77,13 +78,16 @@ function render() {
   fab.textContent = parent ? '＋ Add / Spend' : '＋ Ask';
   fab.classList.toggle('request', !parent);
 
-  refreshEntry(); refreshApprovals(); refreshTithe(); refreshFamily(); refreshDonut(); refreshSettings(); refreshWho();
+  document.documentElement.classList.toggle('kid-page', onKid);
+  refreshEntry(); refreshTxCard(); refreshApprovals(); refreshTithe(); refreshFamily(); refreshDonut(); refreshSettings(); refreshWho();
 }
 store.subscribe(render);
 router.onChange(() => render());
 
 /* ---------------- wiring ---------------- */
 initSheets();
+initTxCard();
+initKidTithe();
 initWho({ onUserChanged: () => store.emit() });
 initLock({ onSwitchUser: () => signOut(), onSignedOut: (msg) => signOut(msg) });
 byId('fab').addEventListener('click', openEntryNew);

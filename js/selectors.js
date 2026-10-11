@@ -45,6 +45,24 @@ export function titheOwed(v) {
   return { per, total, txIds: rows.map(t => t.id) };
 }
 
+// One kid's tithing: what's still waiting to go to church, and the payments made for them.
+export function kidTithe(v, kidId) {
+  const mine = v.transactions.filter(t => t.kidId === kidId && isApproved(t) && t.category === 'Tithing' && t.amountCents < 0);
+  const owedRows = mine.filter(t => !t.settledAt).sort((a, b) => ms(b) - ms(a));
+  const owedCents = owedRows.reduce((s, t) => s - t.amountCents, 0);
+  const bySettle = {};
+  mine.filter(t => t.settledAt).forEach(t => {
+    const key = t.settleId || t.settledAt;
+    const p = bySettle[key] || (bySettle[key] = { settleId: t.settleId, at: t.settledAt, cents: 0, count: 0, by: '' });
+    p.cents += -t.amountCents; p.count++;
+    if (t.settledAt > p.at) p.at = t.settledAt;
+  });
+  const paid = Object.values(bySettle).sort((a, b) => (a.at < b.at ? 1 : -1));
+  paid.forEach(p => { const s = (v.settlements || []).find(x => x.id === p.settleId); if (s) p.by = s.user || ''; });
+  const paidCents = paid.reduce((s, p) => s + p.cents, 0);
+  return { owedRows, owedCents, paid, paidCents, txIds: owedRows.map(t => t.id) };
+}
+
 // Family sheet / Holding segment: kids' money + unsent tithing = total cash to hold.
 export function owedSummary(v) {
   const bal = balances(v);

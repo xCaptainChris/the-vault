@@ -57,7 +57,7 @@ export function createServer(db, opts = {}) {
     const sett = db.settlements.slice().sort((a, b) => (a.ts < b.ts ? 1 : -1)).slice(0, 10)
       .map(s => ({ id: s.id, ts: s.ts, totalCents: s.totalCents, count: s.count, perKid: s.perKid, user: s.user, deviceName: s.deviceName }));
     return {
-      ok: true, schema: 2, serverTime: iso(now()), instance: 'demo',
+      ok: true, schema: 3, serverTime: iso(now()), instance: 'demo',
       kids: db.kids.map(publicKid),
       parents: db.parents.map(p => ({ id: p.id, name: p.name })),
       categories: db.categories.map(c => ({ ...c })),
@@ -151,7 +151,7 @@ export function createServer(db, opts = {}) {
           category: t.category, note: str(t.note, 80), status, user: actor.name, role: actor.role,
           deviceId: str(b.deviceId, 64), deviceName: str(b.deviceName, 60),
           actedBy: s ? s.name : '', actedAt: s ? iso(t0) : '', actedDeviceName: s ? str(b.deviceName, 60) : '',
-          editedBy: '', editedAt: '', settledAt: '', settleId: '', groupId: str(t.groupId, 64),
+          editedBy: '', editedAt: '', settledAt: '', settleId: '', groupId: str(t.groupId, 64), reason: '',
         };
         db.transactions.push(row);
         out.push({ ...row });
@@ -170,14 +170,15 @@ export function createServer(db, opts = {}) {
       const from = target === 'void' ? 'approved' : 'pending';
       if (t.status !== from) return err('CONFLICT', 'Can’t go from ' + t.status + ' to ' + target);
       const t0 = iso(now());
+      const reason = str(b.reason, 140);
       const updated = [], skipped = [];
       for (const r of groupRows(t)) {
         if (r.status !== from) continue;
         if (r.settledAt) { skipped.push(r.id); continue; }
         const before = r.status;
-        r.status = target; r.actedBy = s.name; r.actedAt = t0; r.actedDeviceName = str(b.deviceName, 60);
+        r.status = target; r.actedBy = s.name; r.actedAt = t0; r.actedDeviceName = str(b.deviceName, 60); r.reason = reason;
         updated.push({ ...r });
-        audit('setStatus', r.id, { name: s.name, role: 'parent' }, b, { before, after: target });
+        audit('setStatus', r.id, { name: s.name, role: 'parent' }, b, reason ? { before, after: target, reason } : { before, after: target });
       }
       return { ok: true, txs: updated, skipped };
     },
@@ -262,6 +263,21 @@ export function createServer(db, opts = {}) {
       if (!row) { row = { id, goalName: '', goalCents: 0 }; db.kids.push(row); }
       Object.assign(row, { name, color, emoji, archived: !!k.archived });
       audit('upsertKid', id, { name: s.name, role: 'parent' }, b, { before, after: publicKid(row) });
+      return { ok: true, kid: publicKid(row) };
+    },
+
+    setEmoji(b, s) {
+      if (!s && !(b.user && b.user.role === 'kid' && b.user.id === b.kidId)) {
+        audit('auth_reject', b.kidId || '', { name: str(b.user && b.user.name, 40), role: 'kid' }, b, { action: 'setEmoji', reason: b.token ? 'bad token' : 'not own icon' });
+        return err('AUTH', 'Parent sign-in needed');
+      }
+      const emoji = String(b.emoji == null ? '' : b.emoji).trim();
+      if (emoji.length > 16) return err('BAD_INPUT', 'Emoji too long');
+      const row = kidById(b.kidId);
+      if (!row) return err('NOT_FOUND', 'Kid not found');
+      const before = row.emoji;
+      row.emoji = emoji;
+      audit('setEmoji', row.id, s ? { name: s.name, role: 'parent' } : { name: row.name, role: 'kid' }, b, { before, after: emoji });
       return { ok: true, kid: publicKid(row) };
     },
 

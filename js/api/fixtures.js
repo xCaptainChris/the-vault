@@ -40,7 +40,7 @@ function rows(now, list, kidList) {
       actedAt: status === 'pending' ? '' : ts, actedDeviceName: status === 'pending' ? '' : "Dad's phone",
       editedBy: '', editedAt: '',
       settledAt: extra.settledDaysAgo != null ? new Date(now - extra.settledDaysAgo * 864e5).toISOString() : '',
-      settleId: extra.settleId || '', groupId: extra.group || '',
+      settleId: extra.settleId || '', groupId: extra.group || '', reason: extra.reason || '',
     };
     delete row.mins;
     return row;

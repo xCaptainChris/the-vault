@@ -452,3 +452,38 @@ html.app-locked .fab { display: none; }
 .pill.tithepill { background: rgba(126,166,255,.10); border-color: rgba(126,166,255,.4); color: #cddcff; }
 .pill.tithepill.paid { background: rgba(76,217,100,.08); border-color: rgba(76,217,100,.35); color: #c8f5d0; }
 .paidtag { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--credit); text-transform: uppercase; }
+
+/* ---- v1.1: avatars ---- */
+.heroav { display: block; width: 84px; height: 84px; margin: -4px auto 8px; border-radius: 50%; position: relative; padding: 0; min-width: 0; }
+.heroav svg { display: block; width: 84px; height: 84px; border-radius: 50%; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+.heroav .avedit { position: absolute; right: -2px; bottom: 2px; width: 26px; height: 26px; border-radius: 50%; background: #0c0c10; color: #fff; font-size: 13px; display: grid; place-items: center; border: 2px solid rgba(255,255,255,.7); }
+.bankcard .kemoji.kav { line-height: 0; }
+.bankcard .kemoji.kav svg { width: 44px; height: 44px; border-radius: 50%; display: block; }
+.chipav { display: inline-block; width: 26px; height: 26px; margin: -4px 6px -6px -6px; vertical-align: middle; }
+.chipav svg { width: 26px; height: 26px; display: block; border-radius: 50%; }
+.iconbtn.hasav { padding: 0; overflow: hidden; }
+.iconbtn.hasav svg { width: 100%; height: 100%; display: block; }
+
+#avatarSheet .avtop { position: sticky; top: -10px; z-index: 2; display: flex; align-items: center; gap: 16px; margin: -10px -18px 6px; padding: 10px 18px 12px; background: var(--card); border-bottom: 1px solid var(--line); }
+#avatarSheet .avpreview svg { display: block; width: 132px; height: 132px; border-radius: 50%; }
+#avatarSheet .avtopside { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; min-width: 0; }
+#avatarSheet .avtopside h2 { margin: 0; }
+.seg button.avsel { background: var(--ink); color: #0c0c10; }
+.avgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.avopt { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 4px 6px; border-radius: 14px; background: var(--raised); border: 2px solid transparent; }
+.avopt.sel { border-color: var(--accent); background: rgba(0,210,255,.08); }
+.avthumb svg { width: 56px; height: 56px; display: block; border-radius: 50%; }
+.avlbl { font-size: 11px; font-weight: 600; color: var(--muted); text-align: center; line-height: 1.2; }
+.avopt.sel .avlbl { color: var(--ink); }
+.swrow { display: flex; flex-wrap: wrap; gap: 10px; }
+.avsw { width: 42px; height: 42px; border-radius: 50%; border: 3px solid transparent; box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+.avsw.sel { border-color: var(--accent); }
+.avsw.avnone { display: grid; place-items: center; background: var(--raised); color: var(--muted); font-size: 15px; font-weight: 700; }
+.avsw.avmine { position: relative; }
+.avsw.avmine.sel { border-color: #fff; }
+.avsw.avmine::after { content: '★'; position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255,255,255,.9); font-size: 14px; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
+.avsw.avpick { position: relative; display: grid; place-items: center; overflow: hidden; cursor: pointer; background: conic-gradient(#ff5fa2, #ffd65a, #4cd964, #00d2ff, #b06cff, #ff5fa2); }
+.avsw.avpick .plus { color: #fff; font-size: 20px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,.5); pointer-events: none; }
+.avsw.avpick input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; border: 0; padding: 0; cursor: pointer; }
+.avfoot { text-align: center; margin-top: 10px; }
+@media (min-width: 820px) { #avatarSheet .avtop { top: -18px; margin: -18px -22px 6px; padding: 18px 22px 12px; } }

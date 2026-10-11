@@ -13,7 +13,7 @@
  * Behaviour mirrors js/api/mock-server.js — change both together.
  */
 
-var SCHEMA = 3;
+var SCHEMA = 4;
 var TITHE_PCT = 10;
 var MAX_CENTS = 1000000;
 var LOCK_MAX = 5;
@@ -25,7 +25,7 @@ var DATE_FMT = 'yyyy-mm-dd hh:mm';
 var TABS = {
   Transactions: ['ID', 'Timestamp', 'Child', 'Amount', 'Category', 'Note', 'Status', 'DeviceID', 'DeviceName', 'ActedBy',
     'Settled', 'User', 'KidID', 'Role', 'ClientTime', 'ActedAt', 'ActedDeviceName', 'EditedBy', 'EditedAt', 'GroupID', 'SettleID', 'Reason'],
-  Kids: ['Name', 'Color', 'Goal Name', 'Goal Amount', 'KidID', 'Emoji', 'Archived'],
+  Kids: ['Name', 'Color', 'Goal Name', 'Goal Amount', 'KidID', 'Emoji', 'Archived', 'Avatar'],
   Parents: ['Name', 'PIN', 'ParentID'],
   Categories: ['Name', 'Emoji', 'Color', 'Direction', 'Active'],
   Sessions: ['TokenHash', 'ParentID', 'Name', 'DeviceID', 'DeviceName', 'CreatedAt', 'LastSeenAt', 'RevokedAt'],
@@ -224,7 +224,7 @@ function diag_() {
 var PARENT_ONLY = { setStatus: 1, update: 1, settleTithing: 1, upsertKid: 1 };
 var ACTIONS = {
   login: login_, whoami: whoami_, logout: logout_, add: add_, setStatus: setStatus_, update: update_,
-  settleTithing: settleTithing_, upsertKid: upsertKid_, setGoal: setGoal_, setEmoji: setEmoji_,
+  settleTithing: settleTithing_, upsertKid: upsertKid_, setGoal: setGoal_, setEmoji: setEmoji_, setAvatar: setAvatar_,
 };
 
 function doPost(e) {
@@ -614,6 +614,7 @@ function readKids_() {
       rowNum: i + 2, id: String(row[t.map.KidID] || '').trim(), name: name, color: String(row[t.map.Color] || '#4cd964'),
       emoji: String(row[t.map.Emoji] || ''), goalName: goal > 0 ? String(row[t.map['Goal Name']] || '') : '',
       goalCents: goal > 0 ? Math.round(goal * 100) : 0, archived: bool_(row[t.map.Archived]),
+      avatar: t.map.Avatar == null ? '' : String(row[t.map.Avatar] || ''),
     });
   });
   return out;
@@ -638,8 +639,28 @@ function setEmoji_(b, s) {
   return { ok: true, kid: publicKid_(kid) };
 }
 
+// Avatar code (see js/avatar.js). Same rule as the emoji: parents any kid, a kid only their own.
+var AVATAR_RE = /^(1:[bg]:[a-z]{3}:\d:\d:\d:([a-z]{3}(\+[a-z]{3})*)?|2:[bg]:[a-z]{3}:\d{1,2}:\d{1,2}:\d{1,2}:([a-z]{3}(\+[a-z]{3})*)?:([0-9a-f]{6})?:([0-9a-f]{6})?)$/;
+function setAvatar_(b, s) {
+  if (!s && !(b.user && b.user.role === 'kid' && b.user.id === b.kidId)) {
+    audit_('auth_reject', b.kidId || '', { name: str_(b.user && b.user.name, 40), role: 'kid' }, b, { action: 'setAvatar', reason: b.token ? 'bad token' : 'not own avatar' });
+    return err_('AUTH', 'Parent sign-in needed');
+  }
+  var code = String(b.avatar == null ? '' : b.avatar).trim();
+  if (code && (code.length > 80 || !AVATAR_RE.test(code))) return err_('BAD_INPUT', 'Bad avatar');
+  var kid = null;
+  readKids_().forEach(function (x) { if (x.id === b.kidId) kid = x; });
+  if (!kid) return err_('NOT_FOUND', 'Kid not found');
+  var t = table_('Kids');
+  var before = kid.avatar;
+  setCells_(t.sheet, t.map, kid.rowNum, { Avatar: code });
+  kid.avatar = code;
+  audit_('setAvatar', kid.id, s ? { name: s.name, role: 'parent' } : { name: kid.name, role: 'kid' }, b, { before: before, after: code });
+  return { ok: true, kid: publicKid_(kid) };
+}
+
 function publicKid_(k) {
-  return { id: k.id, name: k.name, color: k.color, emoji: k.emoji, goalName: k.goalName, goalCents: k.goalCents, archived: k.archived };
+  return { id: k.id, name: k.name, color: k.color, emoji: k.emoji, goalName: k.goalName, goalCents: k.goalCents, archived: k.archived, avatar: k.avatar || '' };
 }
 
 function readParents_() {

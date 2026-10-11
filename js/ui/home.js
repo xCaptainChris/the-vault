@@ -1,3 +1,4 @@
+import { avatarFor } from '../avatar.js';
 import { byId, h, esc } from './dom.js';
 import { fmtCents } from '../money.js';
 import * as S from '../selectors.js';
@@ -44,7 +45,8 @@ export function renderHome(view) {
       onclick: () => router.go('#/kid/' + encodeURIComponent(k.id)),
       'aria-label': `${k.name}, balance ${fmtCents(b)}`,
     });
-    card.innerHTML = `<div class="kemoji">${esc(k.emoji || '')}</div><div class="dots">•••• ${esc(k.name.slice(0, 4).toUpperCase())}</div>`;
+    const av = avatarFor(k, 44, { bg: 'rgba(255,255,255,.22)', id: 'avc' + k.id });
+    card.innerHTML = `<div class="kemoji${av ? ' kav' : ''}">${av || esc(k.emoji || '')}</div><div class="dots">•••• ${esc(k.name.slice(0, 4).toUpperCase())}</div>`;
     if (pend[k.id]) card.append(h('span', { class: 'pdot', testid: 'kid-pending-' + k.id, title: 'Pending request' }));
     card.append(h('div', { class: 'kfoot' },
       h('div', {}, h('div', { class: 'kname' }, k.name),

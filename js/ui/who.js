@@ -8,6 +8,7 @@ import { isDemo } from '../env.js';
 import * as S from '../selectors.js';
 import { router } from '../router.js';
 import { rememberPin, forgetPin } from './lock.js';
+import { avatarFor } from '../avatar.js';
 
 let hooks = { onUserChanged: () => {} };
 export function initWho(h2) { hooks = { ...hooks, ...h2 }; wire(); }
@@ -50,7 +51,7 @@ export function openWho(message) {
   S.visibleKids(v).forEach(k => kc.append(h('button', {
     class: 'chip-btn' + (u && u.role === 'kid' && u.id === k.id ? ' sel' : ''), testid: 'who-kid-' + k.id,
     onclick: () => chooseKid(k),
-  }, (k.emoji ? k.emoji + ' ' : '') + k.name)));
+  }, ...(() => { const av = avatarFor(k, 26, { id: 'avw' + k.id }); return av ? [h('span', { class: 'chipav', html: av }), k.name] : [(k.emoji ? k.emoji + ' ' : '') + k.name]; })())));
   body.append(kc);
   openSheet('whoSheet', { locked: !identity.user });
 }

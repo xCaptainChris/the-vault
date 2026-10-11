@@ -6,7 +6,9 @@ import { renderLedger } from './ledger.js';
 import { openDonut } from './donut.js';
 import { openGoal, canEditGoal } from './goal.js';
 import { maybeCelebrate } from './celebrate.js';
-import { openEmoji, canEditEmoji } from './emoji.js';
+import { canEditEmoji } from './emoji.js';
+import { openAvatarBuilder } from './avatarBuilder.js';
+import { avatarFor } from '../avatar.js';
 import { kidTithePill } from './tithe.js';
 
 let currentKid = null;
@@ -24,12 +26,17 @@ export function renderKid(view, kidId) {
 
   hero.style.background = `linear-gradient(160deg, ${k.color}, ${k.color}aa)`;
   const editIcon = canEditEmoji(k.id);
-  hero.innerHTML = (editIcon
-    ? `<button class="label labelbtn" data-testid="hero-icon-btn" aria-label="Change icon"><span class="heroemoji">${esc(k.emoji || '🙂')}</span> ${esc(k.name)}</button>`
-    : `<div class="label">${esc(k.emoji || '')} ${esc(k.name)}</div>`) +
+  const av = avatarFor(k, 84, { bg: 'rgba(255,255,255,.25)', id: 'avhero' });
+  const avHtml = av ? (editIcon
+    ? `<button class="heroav" data-testid="hero-avatar" aria-label="Change avatar">${av}<span class="avedit">✎</span></button>`
+    : `<div class="heroav" data-testid="hero-avatar">${av}</div>`) : '';
+  const icon = av ? '' : esc(k.emoji || (editIcon ? '🙂' : ''));
+  hero.innerHTML = avHtml + (editIcon && !av
+    ? `<button class="label labelbtn" data-testid="hero-icon-btn" aria-label="Make an avatar"><span class="heroemoji">${icon}</span> ${esc(k.name)}</button>`
+    : `<div class="label">${icon ? icon + ' ' : ''}${esc(k.name)}</div>`) +
     `<div class="big num${bal < 0 ? ' neg' : ''}" data-testid="hero-balance">${fmtCents(bal)}</div>` +
     (pend ? `<div class="pendline" data-testid="hero-pending">${fmtSigned(pend.cents)} pending</div>` : '');
-  if (editIcon) hero.querySelector('.labelbtn').onclick = () => openEmoji(k.id);
+  if (editIcon) hero.querySelectorAll('.labelbtn, button.heroav').forEach(b => { b.onclick = () => openAvatarBuilder(k.id); });
   if (g.has) {
     hero.append(h('div', { class: 'goalbar', testid: 'goal-bar' },
       h('div', { class: 'gtext' }, h('span', {}, g.name), h('span', { class: 'num' }, `${fmtCents(bal)} / ${fmtCents(g.target)}`)),

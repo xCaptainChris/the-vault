@@ -49,7 +49,7 @@
   </section>
 </div>
 
-<button class="fab" id="fab" data-testid="fab" hidden>＋ Entry</button>
+<button class="fab" id="fab" data-testid="fab" hidden>＋ Add / Spend</button>
 
 <div class="scrim" id="scrim"></div>
 <div class="sheet" id="entrySheet" data-testid="entry-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
@@ -82,6 +82,18 @@
     <button class="primary" id="pinBtn" data-testid="pin-submit">Unlock</button>
     <button class="cancel" id="pinCancel" data-testid="pin-cancel">Cancel</button>
     <div class="hint" id="pinHint" data-testid="pin-hint" hidden>Demo PINs: Dad 1234 · Mom 5678</div>
+  </div>
+</div>
+
+<div class="modal lock" id="lockModal" data-testid="lock-modal" role="dialog" aria-modal="true" aria-labelledby="lockName">
+  <div class="box">
+    <div class="lockicon" aria-hidden="true">🔒</div>
+    <div class="locksub">The Vault is locked</div>
+    <h2 id="lockName">Parent</h2>
+    <input class="text-in num" id="lockInput" data-testid="lock-input" inputmode="numeric" type="password" placeholder="PIN" autocomplete="off" maxlength="12" aria-label="PIN">
+    <div class="errline" id="lockError" data-testid="lock-error" hidden></div>
+    <button class="primary" id="lockBtn" data-testid="lock-submit">Unlock</button>
+    <button class="cancel" id="lockSwitch" data-testid="lock-switch">Not you? Switch user</button>
   </div>
 </div>
 

@@ -221,7 +221,7 @@ function diag_() {
   return { ok: true, schema: SCHEMA, instance: PropertiesService.getScriptProperties().getProperty('INSTANCE_NAME') || '', tabs: tabs };
 }
 
-var PARENT_ONLY = { setStatus: 1, update: 1, settleTithing: 1, upsertKid: 1, setGoal: 1 };
+var PARENT_ONLY = { setStatus: 1, update: 1, settleTithing: 1, upsertKid: 1 };
 var ACTIONS = {
   login: login_, whoami: whoami_, logout: logout_, add: add_, setStatus: setStatus_, update: update_,
   settleTithing: settleTithing_, upsertKid: upsertKid_, setGoal: setGoal_,
@@ -575,6 +575,11 @@ function upsertKid_(b, s) {
 }
 
 function setGoal_(b, s) {
+  // Parents can set any goal; without a parent session, only the kid's own (a goal moves no money).
+  if (!s && !(b.user && b.user.role === 'kid' && b.user.id === b.kidId)) {
+    audit_('auth_reject', b.kidId || '', { name: str_(b.user && b.user.name, 40), role: 'kid' }, b, { action: 'setGoal', reason: b.token ? 'bad token' : 'not own goal' });
+    return err_('AUTH', 'Parent sign-in needed');
+  }
   var kid = null;
   readKids_().forEach(function (x) { if (x.id === b.kidId) kid = x; });
   if (!kid) return err_('NOT_FOUND', 'Kid not found');
@@ -588,7 +593,7 @@ function setGoal_(b, s) {
   else setCells_(t.sheet, t.map, kid.rowNum, { 'Goal Name': goalName, 'Goal Amount': c / 100 });
   var after = null;
   readKids_().forEach(function (x) { if (x.id === kid.id) after = publicKid_(x); });
-  audit_('setGoal', kid.id, { name: s.name, role: 'parent' }, b, { before: before, after: { goalName: after.goalName, goalCents: after.goalCents } });
+  audit_('setGoal', kid.id, s ? { name: s.name, role: 'parent' } : { name: kid.name, role: 'kid' }, b, { before: before, after: { goalName: after.goalName, goalCents: after.goalCents } });
   return { ok: true, kid: after };
 }
 

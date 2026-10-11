@@ -266,6 +266,10 @@ export function createServer(db, opts = {}) {
     },
 
     setGoal(b, s) {
+      if (!s && !(b.user && b.user.role === 'kid' && b.user.id === b.kidId)) {
+        audit('auth_reject', b.kidId || '', { name: str(b.user && b.user.name, 40), role: 'kid' }, b, { action: 'setGoal', reason: b.token ? 'bad token' : 'not own goal' });
+        return err('AUTH', 'Parent sign-in needed');
+      }
       const row = kidById(b.kidId);
       if (!row) return err('NOT_FOUND', 'Kid not found');
       const goalName = String(b.goalName == null ? '' : b.goalName).trim();
@@ -274,12 +278,12 @@ export function createServer(db, opts = {}) {
       if (!isInt(c) || c < 0 || c > MAX_CENTS) return err('BAD_INPUT', 'Bad goal amount');
       const before = { goalName: row.goalName, goalCents: row.goalCents };
       if (c === 0) { row.goalName = ''; row.goalCents = 0; } else { row.goalName = goalName; row.goalCents = c; }
-      audit('setGoal', row.id, { name: s.name, role: 'parent' }, b, { before, after: { goalName: row.goalName, goalCents: row.goalCents } });
+      audit('setGoal', row.id, s ? { name: s.name, role: 'parent' } : { name: row.name, role: 'kid' }, b, { before, after: { goalName: row.goalName, goalCents: row.goalCents } });
       return { ok: true, kid: publicKid(row) };
     },
   };
 
-  const PARENT_ONLY = { setStatus: 1, update: 1, settleTithing: 1, upsertKid: 1, setGoal: 1 };
+  const PARENT_ONLY = { setStatus: 1, update: 1, settleTithing: 1, upsertKid: 1 };
 
   function post(body) {
     const b = body && typeof body === 'object' ? body : {};

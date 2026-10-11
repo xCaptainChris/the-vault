@@ -40,7 +40,9 @@ export const mockAdapter = {
   kind: 'mock',
   async load() {
     await gate();
-    return clone(unwrap(server.get()));
+    const data = clone(unwrap(server.get()));
+    if (ctrl.loadLag) await wait(ctrl.loadLag);     // test hook: response arrives late (stale)
+    return data;
   },
   async call(action, body) {
     await gate();
@@ -63,6 +65,7 @@ export const mockHooks = {
   },
   setOffline(v) { ctrl.offline = !!v; saveCtrl(); },
   setLatency(ms) { ctrl.latency = Number(ms) || 0; saveCtrl(); },
+  setLoadLag(ms) { ctrl.loadLag = Number(ms) || 0; saveCtrl(); },
   failNext(n = 1, code = 'NETWORK', opts = {}) {
     for (let i = 0; i < n; i++) failQueue.push({ code, afterApply: !!opts.afterApply });
   },

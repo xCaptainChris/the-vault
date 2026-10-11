@@ -35,10 +35,11 @@ function txItem(view, t) {
   const dir = t.amountCents >= 0 ? 'in' : 'out';
   const local = t._local || t._pending;
   const cls = 'txrow' + (t.status === 'pending' ? ' pend' : '') + (t.status === 'void' ? ' voided' : '') + (t.status === 'denied' ? ' denied' : '');
-  const desc = h('div', { class: 'txdesc' }, t.note || t.category || 'Entry');
-  if (t.status === 'pending') desc.append(' ', h('span', { class: 'pendtag', testid: 'pending-tag' }, 'pending'));
-  if (t.status === 'denied') desc.append(' ', h('span', { class: 'deniedtag', testid: 'denied-tag' }, 'denied'));
-  if (t.status === 'void') desc.append(' ', h('span', { class: 'voidtag' }, 'void'));
+  // Tags never get cut off: the note shrinks (…) instead.
+  const desc = h('div', { class: 'txdesc' }, h('span', { class: 'tdtext' }, t.note || t.category || 'Entry'));
+  if (t.status === 'pending') desc.append(h('span', { class: 'pendtag', testid: 'pending-tag' }, 'pending'));
+  if (t.status === 'denied') desc.append(h('span', { class: 'deniedtag', testid: 'denied-tag' }, 'denied'));
+  if (t.status === 'void') desc.append(h('span', { class: 'voidtag' }, 'void'));
   if (t.reason) desc.append(' ', h('span', { class: 'notetag', title: 'Has a note' }, '💬'));
   if (t.category === 'Tithing' && t.settledAt) desc.append(' ', h('span', { class: 'paidtag', testid: 'tithe-paid-tag' }, '✓ paid'));
   if (local) desc.append(' ', h('span', { class: 'localtag', testid: 'local-tag', title: 'Not synced yet' }, '⏳'));

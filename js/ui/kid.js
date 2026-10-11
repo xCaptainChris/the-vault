@@ -10,6 +10,7 @@ import { canEditEmoji } from './emoji.js';
 import { openAvatarBuilder } from './avatarBuilder.js';
 import { avatarFor } from '../avatar.js';
 import { kidTithePill } from './tithe.js';
+import { maybeShowDecisions } from './decisions.js';
 
 let currentKid = null;
 export const kidPage = { get id() { return currentKid; } };
@@ -26,26 +27,35 @@ export function renderKid(view, kidId) {
 
   hero.style.background = `linear-gradient(160deg, ${k.color}, ${k.color}aa)`;
   const editIcon = canEditEmoji(k.id);
+  // Face: the avatar, else the emoji in a circle. Tapping it (when allowed) opens the avatar builder.
   const av = avatarFor(k, 84, { bg: 'rgba(255,255,255,.25)', id: 'avhero' });
-  const avHtml = av ? (editIcon
-    ? `<button class="heroav" data-testid="hero-avatar" aria-label="Change avatar">${av}<span class="avedit">✎</span></button>`
-    : `<div class="heroav" data-testid="hero-avatar">${av}</div>`) : '';
-  const icon = av ? '' : esc(k.emoji || (editIcon ? '🙂' : ''));
-  hero.innerHTML = avHtml + (editIcon && !av
-    ? `<button class="label labelbtn" data-testid="hero-icon-btn" aria-label="Make an avatar"><span class="heroemoji">${icon}</span> ${esc(k.name)}</button>`
-    : `<div class="label">${icon ? icon + ' ' : ''}${esc(k.name)}</div>`) +
+  const face = av
+    ? (editIcon
+      ? `<button class="heroav" data-testid="hero-avatar" aria-label="Change avatar">${av}<span class="avedit">✎</span></button>`
+      : `<div class="heroav" data-testid="hero-avatar">${av}</div>`)
+    : (editIcon
+      ? `<button class="heroav heroemo" data-testid="hero-icon-btn" aria-label="Make an avatar">${esc(k.emoji || '🙂')}<span class="avedit">✎</span></button>`
+      : (k.emoji ? `<div class="heroav heroemo">${esc(k.emoji)}</div>` : ''));
+  hero.innerHTML = `<div class="herotop">${face}<div class="herobal">` +
+    `<div class="label">${esc(k.name)}</div>` +
     `<div class="big num${bal < 0 ? ' neg' : ''}" data-testid="hero-balance">${fmtCents(bal)}</div>` +
-    (pend ? `<div class="pendline" data-testid="hero-pending">${fmtSigned(pend.cents)} pending</div>` : '');
-  if (editIcon) hero.querySelectorAll('.labelbtn, button.heroav').forEach(b => { b.onclick = () => openAvatarBuilder(k.id); });
+    (pend ? `<div class="pendline" data-testid="hero-pending">${fmtSigned(pend.cents)} pending</div>` : '') +
+    `</div></div>`;
+  if (editIcon) hero.querySelectorAll('button.heroav').forEach(b => { b.onclick = () => openAvatarBuilder(k.id); });
+  const goalEdit = canEditGoal(k.id)
+    ? h('button', { class: 'goalbtn', testid: 'goal-edit-btn', 'aria-label': g.has ? 'Edit goal' : 'Set goal', onclick: () => openGoal(k.id) },
+      h('span', { class: 'gpill' }, g.has ? '✎ Edit' : '＋ Set goal'))
+    : null;
   if (g.has) {
-    hero.append(h('div', { class: 'goalbar', testid: 'goal-bar' },
-      h('div', { class: 'gtext' }, h('span', {}, g.name), h('span', { class: 'num' }, `${fmtCents(bal)} / ${fmtCents(g.target)}`)),
+    hero.append(h('div', { class: 'goalbar' + (g.reached ? ' reached' : ''), testid: 'goal-bar' },
+      h('div', { class: 'gtext' },
+        h('span', { class: 'gname' }, g.name, goalEdit),
+        g.reached
+          ? h('span', { class: 'greached', testid: 'goal-reached' }, '🎉 Reached!')
+          : h('span', { class: 'num' }, `${fmtCents(bal)} / ${fmtCents(g.target)}`)),
       h('div', { class: 'track' }, h('div', { class: 'fill', style: { width: g.pct + '%' } }))));
-    if (g.reached) hero.append(h('div', { class: 'goalreached', testid: 'goal-reached' }, '🎉 Goal reached'));
-  }
-  if (canEditGoal(k.id)) {
-    hero.append(h('div', {}, h('button', { class: 'goalbtn', testid: 'goal-edit-btn', onclick: () => openGoal(k.id) },
-      '✎ ' + (g.has ? 'Edit goal' : 'Set goal'))));
+  } else if (goalEdit) {
+    hero.append(h('div', { class: 'goalnone' }, goalEdit));
   }
   if (g.reached) maybeCelebrate(k);
 
@@ -56,15 +66,20 @@ export function renderKid(view, kidId) {
   if (S.hasDigital(view, k.id)) {
     const d = S.digitalSpend(view, k.id, 30);
     pill.append(h('button', { class: 'pill', testid: 'digital-pill', onclick: () => openDonut(k.id, 'out', 30) },
-      '🎮 ', h('b', { class: 'num', testid: 'digital-amount' }, fmtCents(d)), ' on games · last 30 days',
-      h('span', { class: 'more' }, 'chart ›')));
+      '🎮 ', h('b', { class: 'num', testid: 'digital-amount' }, fmtCents(d)), ' on games', h('span', { class: 'sub' }, '30 days'),
+      h('span', { class: 'more' }, '›')));
   }
 
-  renderCats('catIn', S.catTotals(view, k.id, 'in', 0), 'var(--credit)');
-  renderCats('catOut', S.catTotals(view, k.id, 'out', 0), 'var(--debit)');
-  byId('panelIn').onclick = () => openDonut(k.id, 'in', 30);
-  byId('panelOut').onclick = () => openDonut(k.id, 'out', 30);
+  const ins = S.catTotals(view, k.id, 'in', 0);
+  const outs = S.catTotals(view, k.id, 'out', 0);
+  renderCats('catIn', ins, 'var(--credit)');
+  renderCats('catOut', outs, 'var(--debit)');
+  byId('totIn').textContent = fmtCents(ins.reduce((a, e) => a + e.cents, 0));
+  byId('totOut').textContent = fmtCents(outs.reduce((a, e) => a + e.cents, 0));
+  byId('panelIn').onclick = () => openDonut(k.id, 'in', 0);       // the panels show all-time totals
+  byId('panelOut').onclick = () => openDonut(k.id, 'out', 0);
 
+  if (identity.user && identity.user.role === 'kid' && identity.user.id === k.id) maybeShowDecisions(view, k);
   renderLedger(view, k, parent);
 }
 

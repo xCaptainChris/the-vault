@@ -65,7 +65,7 @@ export function kidTithePill(view, kid) {
   const kt = S.kidTithe(view, kid.id);
   if (!kt.owedCents && !kt.paid.length) return null;
   const text = kt.owedCents
-    ? [h('b', { class: 'num' }, fmtCents(kt.owedCents)), ' tithing waiting to be paid']
+    ? [h('b', { class: 'num' }, fmtCents(kt.owedCents)), ' tithing waiting']
     : ['Tithing paid ', h('b', {}, '✓'), kt.paid[0] ? ' · ' + fmtDay(kt.paid[0].at) : ''];
   return h('button', { class: 'pill tithepill' + (kt.owedCents ? ' owed' : ' paid'), testid: 'kid-tithe-pill', onclick: () => openKidTithe(kid.id) },
     '⛪ ', ...text, h('span', { class: 'more' }, '›'));

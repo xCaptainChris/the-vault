@@ -1,0 +1,8 @@
+node_modules/
+tests/test-results/
+tests/playwright-report/
+tests/.cache/
+.DS_Store
+*.log
+__pycache__/
+tests/qa/screens/

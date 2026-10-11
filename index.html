@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="The Vault">
+<meta name="theme-color" content="#101014">
+<title>The Vault</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/png" href="./icons/favicon-32.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="preload" href="./fonts/Outfit-Variable.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="./css/app.css">
+<script type="module" src="./js/app.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="app">
+    <div class="logo">The Vault<small id="logoSub">Family Bank</small></div>
+    <div class="spacer"></div>
+    <button class="iconbtn" id="syncBtn" data-testid="sync-btn" title="Sync now" aria-label="Sync now"><span class="ic">↻</span><span class="badge" id="syncBadge" data-testid="sync-badge" hidden></span></button>
+    <button class="iconbtn" id="acctBtn" data-testid="account-btn" title="Account" aria-label="Account">🔒</button>
+  </header>
+
+  <section class="view" id="view-home" data-testid="view-home">
+    <div id="homeTop"></div>
+    <div class="cards" id="cardGrid" data-testid="card-grid"></div>
+  </section>
+
+  <section class="view" id="view-kid" data-testid="view-kid">
+    <button class="back" id="backBtn" data-testid="back-btn">← All accounts</button>
+    <div class="kidgrid">
+      <div class="colleft">
+        <div class="hero" id="kidHero" data-testid="kid-hero"></div>
+        <div id="pillSlot"></div>
+        <div class="split">
+          <button class="panel clickable" id="panelIn" data-testid="panel-in"><h3>Money in<span class="more">chart ›</span></h3><div id="catIn"></div></button>
+          <button class="panel clickable" id="panelOut" data-testid="panel-out"><h3>Money out<span class="more">chart ›</span></h3><div id="catOut"></div></button>
+        </div>
+      </div>
+      <div class="colright">
+        <div class="flabel">History</div>
+        <div class="ledger" id="kidLedger" data-testid="ledger"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<button class="fab" id="fab" data-testid="fab" hidden>＋ Entry</button>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="entrySheet" data-testid="entry-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
+<div class="sheet" id="approveSheet" data-testid="approve-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
+<div class="sheet" id="titheSheet" data-testid="tithe-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
+<div class="sheet" id="familySheet" data-testid="family-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
+<div class="sheet" id="donutSheet" data-testid="donut-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
+<div class="sheet" id="goalSheet" data-testid="goal-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
+<div class="sheet" id="whoSheet" data-testid="who-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
+<div class="sheet" id="accountSheet" data-testid="account-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
+<div class="sheet" id="settingsSheet" data-testid="settings-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
+<div class="sheet" id="kidEditSheet" data-testid="kid-edit-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
+
+<div class="modal" id="deviceModal" data-testid="device-modal" role="dialog" aria-modal="true">
+  <div class="box">
+    <h2>Name this device</h2>
+    <p>Shown in the ledger so you know which phone made each entry.</p>
+    <input class="text-in" id="deviceInput" data-testid="device-input" placeholder="Kitchen iPad" maxlength="30" autocomplete="off">
+    <button class="primary" id="deviceBtn" data-testid="device-save">Save</button>
+    <div class="devid" id="devIdLine"></div>
+  </div>
+</div>
+
+<div class="modal" id="pinModal" data-testid="pin-modal" role="dialog" aria-modal="true">
+  <div class="box">
+    <h2 id="pinTitle">Parent PIN</h2>
+    <p>Enter your PIN to continue.</p>
+    <input class="text-in num" id="pinInput" data-testid="pin-input" inputmode="numeric" type="password" placeholder="PIN" autocomplete="off" maxlength="12">
+    <div class="errline" id="pinError" data-testid="pin-error" hidden></div>
+    <button class="primary" id="pinBtn" data-testid="pin-submit">Unlock</button>
+    <button class="cancel" id="pinCancel" data-testid="pin-cancel">Cancel</button>
+    <div class="hint" id="pinHint" data-testid="pin-hint" hidden>Demo PINs: Dad 1234 · Mom 5678</div>
+  </div>
+</div>
+
+<div class="toast" id="toast" data-testid="snackbar" role="status" aria-live="polite"><span class="tmsg"></span><button data-testid="snackbar-action" hidden></button></div>
+</body>
+</html>

@@ -50,14 +50,14 @@ export function createServer(db, opts = {}) {
   const cat = (name) => db.categories.find(c => c.name === name);
 
   function publicKid(k) {
-    return { id: k.id, name: k.name, color: k.color, emoji: k.emoji || '', goalName: k.goalName || '', goalCents: k.goalCents || 0, archived: !!k.archived };
+    return { id: k.id, name: k.name, color: k.color, emoji: k.emoji || '', goalName: k.goalName || '', goalCents: k.goalCents || 0, archived: !!k.archived, avatar: k.avatar || '' };
   }
 
   function get() {
     const sett = db.settlements.slice().sort((a, b) => (a.ts < b.ts ? 1 : -1)).slice(0, 10)
       .map(s => ({ id: s.id, ts: s.ts, totalCents: s.totalCents, count: s.count, perKid: s.perKid, user: s.user, deviceName: s.deviceName }));
     return {
-      ok: true, schema: 3, serverTime: iso(now()), instance: 'demo',
+      ok: true, schema: 4, serverTime: iso(now()), instance: 'demo',
       kids: db.kids.map(publicKid),
       parents: db.parents.map(p => ({ id: p.id, name: p.name })),
       categories: db.categories.map(c => ({ ...c })),
@@ -278,6 +278,21 @@ export function createServer(db, opts = {}) {
       const before = row.emoji;
       row.emoji = emoji;
       audit('setEmoji', row.id, s ? { name: s.name, role: 'parent' } : { name: row.name, role: 'kid' }, b, { before, after: emoji });
+      return { ok: true, kid: publicKid(row) };
+    },
+
+    setAvatar(b, s) {
+      if (!s && !(b.user && b.user.role === 'kid' && b.user.id === b.kidId)) {
+        audit('auth_reject', b.kidId || '', { name: str(b.user && b.user.name, 40), role: 'kid' }, b, { action: 'setAvatar', reason: b.token ? 'bad token' : 'not own avatar' });
+        return err('AUTH', 'Parent sign-in needed');
+      }
+      const code = String(b.avatar == null ? '' : b.avatar).trim();
+      if (code && (code.length > 80 || !/^(1:[bg]:[a-z]{3}:\d:\d:\d:([a-z]{3}(\+[a-z]{3})*)?|2:[bg]:[a-z]{3}:\d{1,2}:\d{1,2}:\d{1,2}:([a-z]{3}(\+[a-z]{3})*)?:([0-9a-f]{6})?:([0-9a-f]{6})?)$/.test(code))) return err('BAD_INPUT', 'Bad avatar');
+      const row = kidById(b.kidId);
+      if (!row) return err('NOT_FOUND', 'Kid not found');
+      const before = row.avatar || '';
+      row.avatar = code;
+      audit('setAvatar', row.id, s ? { name: s.name, role: 'parent' } : { name: row.name, role: 'kid' }, b, { before, after: code });
       return { ok: true, kid: publicKid(row) };
     },
 

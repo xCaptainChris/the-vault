@@ -6,6 +6,8 @@ import { renderLedger } from './ledger.js';
 import { openDonut } from './donut.js';
 import { openGoal, canEditGoal } from './goal.js';
 import { maybeCelebrate } from './celebrate.js';
+import { openEmoji, canEditEmoji } from './emoji.js';
+import { kidTithePill } from './tithe.js';
 
 let currentKid = null;
 export const kidPage = { get id() { return currentKid; } };
@@ -21,9 +23,13 @@ export function renderKid(view, kidId) {
   const g = S.goalState(k, bal);
 
   hero.style.background = `linear-gradient(160deg, ${k.color}, ${k.color}aa)`;
-  hero.innerHTML = `<div class="label">${esc(k.emoji || '')} ${esc(k.name)}</div>` +
+  const editIcon = canEditEmoji(k.id);
+  hero.innerHTML = (editIcon
+    ? `<button class="label labelbtn" data-testid="hero-icon-btn" aria-label="Change icon"><span class="heroemoji">${esc(k.emoji || '🙂')}</span> ${esc(k.name)}</button>`
+    : `<div class="label">${esc(k.emoji || '')} ${esc(k.name)}</div>`) +
     `<div class="big num${bal < 0 ? ' neg' : ''}" data-testid="hero-balance">${fmtCents(bal)}</div>` +
     (pend ? `<div class="pendline" data-testid="hero-pending">${fmtSigned(pend.cents)} pending</div>` : '');
+  if (editIcon) hero.querySelector('.labelbtn').onclick = () => openEmoji(k.id);
   if (g.has) {
     hero.append(h('div', { class: 'goalbar', testid: 'goal-bar' },
       h('div', { class: 'gtext' }, h('span', {}, g.name), h('span', { class: 'num' }, `${fmtCents(bal)} / ${fmtCents(g.target)}`)),
@@ -38,6 +44,8 @@ export function renderKid(view, kidId) {
 
   const pill = byId('pillSlot');
   pill.innerHTML = '';
+  const tp = kidTithePill(view, k);
+  if (tp) pill.append(tp);
   if (S.hasDigital(view, k.id)) {
     const d = S.digitalSpend(view, k.id, 30);
     pill.append(h('button', { class: 'pill', testid: 'digital-pill', onclick: () => openDonut(k.id, 'out', 30) },

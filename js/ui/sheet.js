@@ -55,7 +55,7 @@ function attachDrag(el) {
   const scrim = byId('scrim');
 
   el.addEventListener('touchstart', (e) => {
-    if (isDialog() || !current || current.id !== el.id || e.touches.length !== 1) { tracking = false; return; }
+    if (isDialog() || el.classList.contains('popcard') || !current || current.id !== el.id || e.touches.length !== 1) { tracking = false; return; }
     const y = e.touches[0].clientY;
     const top = el.getBoundingClientRect().top;
     fromGrip = y - top < 44;                       // the grip strip at the top of the sheet

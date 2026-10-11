@@ -9,6 +9,7 @@ import { identity, prefs, setPref } from '../identity.js';
 import { newId } from '../ids.js';
 import { write } from '../actions.js';
 import { router } from '../router.js';
+import { reasonField } from './reason.js';
 
 const DEFAULT_CAT = { in: 'Chores', out: 'Spending' };
 let st = null;               // entry state while the sheet is open
@@ -85,7 +86,13 @@ function build() {
     h('div', { class: 'flabel' }, 'Amount'), els.amount, els.quick,
     h('div', { class: 'flabel' }, 'What for'), els.note,
     h('div', { class: 'flabel' }, 'Category'), els.cats,
-    els.titheSlot, els.warn, els.error, els.buttons);
+    els.titheSlot, els.warn, els.error);
+  if (edit && st.orig.status === 'pending') {
+    const k = S.kidById(view(), st.orig.kidId);
+    els.reason = reasonField({ kidName: k ? k.name : '', testid: 'entry-reason' });
+    body.append(h('div', { class: 'flabel' }, 'Note to ' + (k ? k.name : 'them')), els.reason.el);
+  }
+  body.append(els.buttons);
   refresh();
 }
 
@@ -243,7 +250,11 @@ function saveEdit(approve) {
     if (st.retithe && signed > 0 && signed !== o.amountCents && linkedTithe(view(), o)) body.retithe = true;
     steps.push(['update', body]);
   }
-  if (approve) steps.push(['setStatus', { id: o.id, status: 'approved' }]);
+  if (approve) {
+    const b = { id: o.id, status: 'approved' };
+    if (els.reason && els.reason.value) b.reason = els.reason.value;
+    steps.push(['setStatus', b]);
+  }
   closeSheets();
   if (!steps.length) return;
   write(steps, approve ? 'Approved' : 'Saved');
@@ -251,8 +262,10 @@ function saveEdit(approve) {
 
 function denyEdit() {
   const id = st.orig.id;
+  const b = { id, status: 'denied' };
+  if (els.reason && els.reason.value) b.reason = els.reason.value;
   closeSheets();
-  write([['setStatus', { id, status: 'denied' }]], 'Denied', 'warn');
+  write([['setStatus', b]], 'Denied', 'warn');
 }
 
 export function refreshEntry() { if (st && els) refresh(); }

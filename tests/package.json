@@ -1,0 +1,16 @@
+{
+  "name": "the-vault-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npm run test:unit && npm run test:backend && npm run test:ui",
+    "test:unit": "node --test 'unit/*.test.mjs'",
+    "test:backend": "node --test 'apps-script-harness/*.test.mjs'",
+    "test:ui": "playwright test",
+    "test:live": "node --test 'live/*.test.mjs'",
+    "test:qa": "node --test 'qa/*.test.mjs' && playwright test -c qa/qa.config.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.0"
+  }
+}

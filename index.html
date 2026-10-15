@@ -62,6 +62,7 @@
 <div class="sheet" id="accountSheet" data-testid="account-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
 <div class="sheet" id="settingsSheet" data-testid="settings-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
 <div class="sheet popcard" id="kidTitheSheet" data-testid="kid-tithe-sheet" role="dialog" aria-modal="true"><button class="cardx" data-testid="kid-tithe-close" aria-label="Close">✕</button><div class="body"></div></div>
+<div class="sheet popcard" id="titheAskSheet" data-testid="tithe-ask-sheet" role="dialog" aria-modal="true"><div class="body"></div></div>
 <div class="sheet popcard" id="decisionSheet" data-testid="decision-sheet" role="dialog" aria-modal="true"><button class="cardx" data-testid="decision-close" aria-label="Close">✕</button><div class="body"></div></div>
 <div class="sheet popcard" id="txSheet" data-testid="tx-sheet" role="dialog" aria-modal="true"><button class="cardx" data-testid="tx-card-close" aria-label="Close">✕</button><div class="body"></div></div>
 <div class="sheet" id="avatarSheet" data-testid="avatar-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
@@ -98,6 +99,7 @@
     <input class="text-in num" id="lockInput" data-testid="lock-input" inputmode="numeric" type="password" placeholder="PIN" autocomplete="off" maxlength="12" aria-label="PIN">
     <div class="errline" id="lockError" data-testid="lock-error" hidden></div>
     <button class="primary" id="lockBtn" data-testid="lock-submit">Unlock</button>
+    <button class="chip-btn lockbio" id="lockBio" data-testid="lock-bio" hidden>Unlock with Face ID</button>
     <button class="cancel" id="lockSwitch" data-testid="lock-switch">Not you? Switch user</button>
   </div>
 </div>

@@ -12,6 +12,7 @@ import { createOutbox } from './outbox.js';
 import { router } from './router.js';
 import * as selectors from './selectors.js';
 import { registerServiceWorker } from './platform.js';
+import { checkBio } from './bio.js';
 import { byId, snackbar } from './ui/dom.js';
 import { initSheets, closeSheets } from './ui/sheet.js';
 import { renderHeader } from './ui/header.js';
@@ -143,6 +144,7 @@ setInterval(() => {
 
 /* ---------------- boot ---------------- */
 if (isDemo) window.__vault = { store, outbox, mock: mockHooks, selectors, api, identity, config: CONFIG };
+checkBio();
 render();
 registerServiceWorker((apply) => snackbar('Update ready', { action: 'Reload', onAction: apply, ms: Infinity }));
 if (!identity.device.name) showDeviceModal(false);

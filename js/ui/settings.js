@@ -1,5 +1,7 @@
 // Account menu, Settings (kids, device, sync, sheet link, sign out) and the kid editor.
-import { byId, h, ago } from './dom.js';
+import { byId, h, ago, snackbar } from './dom.js';
+import { bioAvailable, bioFor, forgetBio, bioName } from '../bio.js';
+import { setupBio } from './lock.js';
 import { openSheet, closeSheets, isOpen } from './sheet.js';
 import { identity } from '../identity.js';
 import { store } from '../store.js';
@@ -22,6 +24,7 @@ export function openAccount() {
   body.append(h('button', { class: 'menu-btn', testid: 'menu-switch', onclick: () => openWho() }, '👥 Switch user'));
   if (parent) {
     body.append(
+      bioToggle(),
       h('button', { class: 'menu-btn', testid: 'menu-settings', onclick: openSettings }, '⚙️ Settings'),
       h('button', { class: 'menu-btn', testid: 'menu-signout', onclick: () => signOut() }, '🚪 Sign out'));
   }
@@ -137,3 +140,15 @@ function firstGrapheme(s) {
   }
 }
 
+
+// Parents: turn Face ID unlock on/off for this phone (shown only where the phone supports it).
+function bioToggle() {
+  const s = identity.session;
+  if (!bioAvailable() || !s || !s.parent) return null;
+  const on = !!bioFor(s.parent.id);
+  return h('button', { class: 'menu-btn', testid: 'menu-bio', onclick: async () => {
+    if (on) { forgetBio(); snackbar(bioName() + ' is off'); closeSheets(); return; }
+    closeSheets();
+    await setupBio(s.parent);
+  } }, '🙂 ' + bioName() + ' unlock', h('span', { class: 'tag' }, on ? 'On' : 'Off'));
+}

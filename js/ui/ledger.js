@@ -17,7 +17,9 @@ export function renderLedger(view, kid, parent) {
   if (ctx !== openCtx) { openCtx = ctx; box.scrollTop = 0; }
   const keepScroll = box.scrollTop;
   box.innerHTML = '';
-  const rows = view.transactions.filter(t => t.kidId === kid.id && (parent || t.status !== 'void'));
+  // A denied request had nothing to tithe on, so its tithing row is left out (the request shows, denied).
+  const rows = view.transactions.filter(t => t.kidId === kid.id && (parent || t.status !== 'void')
+    && !(t.category === 'Tithing' && t.status === 'denied'));
   if (!rows.length) {
     box.append(h('div', { class: 'txrow empty' }, 'No entries yet — add the first one.'));
     return;

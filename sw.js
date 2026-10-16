@@ -1,6 +1,6 @@
 // The Vault service worker. VERSION must equal CONFIG.APP_VERSION in js/config.js (a test checks).
 // Bump both on every deploy. Never caches Apps Script calls (cross-origin is ignored).
-const VERSION = '1.1.9';
+const VERSION = '1.2.0';
 const CACHE = `vault-shell-${VERSION}`;
 const SHELL = [
   './index.html',

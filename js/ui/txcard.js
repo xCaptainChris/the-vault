@@ -2,7 +2,7 @@
 // denied it and why. Parents can approve/deny (with an optional reason), edit or void from here.
 import { byId, h, fmtFull, fmtShortTime, fmtDayYear, confirmTwice } from './dom.js';
 import { openSheet, closeSheets, isOpen } from './sheet.js';
-import { fmtSigned, fmtCents } from '../money.js';
+import { fmtSigned } from '../money.js';
 import * as S from '../selectors.js';
 import { store } from '../store.js';
 import { identity } from '../identity.js';
@@ -72,7 +72,7 @@ function render() {
   const info = h('div', { class: 'cardinfo' });
   const who = (byKid ? 'Asked' : 'Added') + (t.user ? ' by ' + t.user : '');
   info.append(row(who, fmtFull(S.when(t)), 'tx-card-entered'));
-  if (parent && (t.deviceName || t.deviceId)) {
+  if (t.deviceName || (parent && t.deviceId)) {
     const dev = h('span', {}, t.deviceName || '');
     if (parent && t.deviceId) dev.append(' ', h('span', { class: 'muted', testid: 'tx-device-id' }, '(' + t.deviceId + ')'));
     info.append(row('On', dev));
@@ -87,11 +87,6 @@ function render() {
   });
   if (t.settledAt) info.append(row('Sent to church', fmtDayYear(t.settledAt)));
   if (t._local || t._pending) info.append(row('⏳', 'Not synced yet'));
-  if (parent && t.status === 'pending' && t.amountCents < 0) {
-    const before = S.balanceOf(v, t.kidId);
-    const after = before + S.groupOf(v, t).reduce((a, x) => a + x.amountCents, 0);
-    info.append(row('Balance if approved', `${fmtCents(before)} → ${fmtCents(after)}${after < 0 ? ' ⚠️' : ''}`, 'tx-card-balance'));
-  }
   card.append(info);
 
   if (t.reason) card.append(h('div', { class: 'cardreason', testid: 'tx-reason' }, h('span', { class: 'rq' }, '“'), t.reason, h('span', { class: 'rq' }, '”')));
@@ -109,13 +104,12 @@ function render() {
   } else if (parent && t.status === 'approved') {
     const acts = h('div', { class: 'txactions' });
     acts.append(h('button', { testid: 'tx-edit', onclick: () => { closeSheets(); openEntryEdit(t.id); } }, '✎ Edit'));
-    const linked = S.groupOf(v, t).filter(x => x.id !== t.id && x.status !== 'void');
     const vb = h('button', { class: 'voidbtn', testid: 'tx-void' }, 'Void');
-    confirmTwice(vb, linked.length ? `Tap again — voids ${linked[0].category === 'Tithing' ? 'its tithing' : 'the linked entry'} too` : 'Tap again to void', () => { closeSheets(); write([['setStatus', { id: t.id, status: 'void' }]], 'Voided', 'warn'); });
+    confirmTwice(vb, 'Tap again to void', () => { closeSheets(); write([['setStatus', { id: t.id, status: 'void' }]], 'Voided', 'warn'); });
     acts.append(vb);
     card.append(acts);
   }
-  if (parent) card.append(h('div', { class: 'cardid' }, 'ID ' + t.id));
+  card.append(h('div', { class: 'cardid' }, 'ID ' + t.id));
   body.append(card);
   return true;
 }

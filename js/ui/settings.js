@@ -1,7 +1,5 @@
 // Account menu, Settings (kids, device, sync, sheet link, sign out) and the kid editor.
-import { byId, h, ago, snackbar } from './dom.js';
-import { bioAvailable, bioFor, forgetBio, bioName } from '../bio.js';
-import { setupBio } from './lock.js';
+import { byId, h, ago } from './dom.js';
 import { openSheet, closeSheets, isOpen } from './sheet.js';
 import { identity } from '../identity.js';
 import { store } from '../store.js';
@@ -24,7 +22,6 @@ export function openAccount() {
   body.append(h('button', { class: 'menu-btn', testid: 'menu-switch', onclick: () => openWho() }, '👥 Switch user'));
   if (parent) {
     body.append(
-      bioToggle(),
       h('button', { class: 'menu-btn', testid: 'menu-settings', onclick: openSettings }, '⚙️ Settings'),
       h('button', { class: 'menu-btn', testid: 'menu-signout', onclick: () => signOut() }, '🚪 Sign out'));
   }
@@ -77,17 +74,7 @@ function renderSettings() {
   if (CONFIG.SHEET_URL) body.append(h('button', { class: 'primary plain', testid: 'settings-open-sheet', onclick: () => openExternal(CONFIG.SHEET_URL) }, 'Open the Sheet'));
   body.append(h('button', { class: 'primary ghost', testid: 'settings-signout', onclick: () => signOut() }, 'Sign out'));
   body.append(h('div', { class: 'version', testid: 'settings-version' }, `v${CONFIG.APP_VERSION} · ${isDemo ? 'demo' : 'live'}`));
-  body.append(h('div', { class: 'version', testid: 'settings-screen' }, screenInfo()));
   body.parentElement.scrollTop = keep;
-}
-
-// Screen numbers for troubleshooting the iPhone Home Screen layout (screenshot this line).
-function screenInfo() {
-  const probe = (css) => { const d = document.createElement('div'); d.style.cssText = 'position:fixed;left:0;top:0;width:1px;visibility:hidden;pointer-events:none;' + css; document.body.appendChild(d); const r = d.getBoundingClientRect(); const cs = getComputedStyle(d); document.body.removeChild(d); return { h: Math.round(r.height), pt: parseFloat(cs.paddingTop) || 0, pb: parseFloat(cs.paddingBottom) || 0 }; };
-  const vh = probe('height:100vh').h, dvh = probe('height:100dvh').h, lvh = probe('height:100lvh').h;
-  const ins = probe('height:0;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)');
-  const vv = window.visualViewport ? Math.round(visualViewport.height) : '-';
-  return `screen ${screen.width}×${screen.height} · inner ${innerHeight} · vv ${vv} · vh ${vh}/${dvh}/${lvh} · inset ${ins.pt}/${ins.pb} · ${navigator.standalone ? 'app' : 'browser'}`;
 }
 
 function describe(o) {
@@ -150,15 +137,3 @@ function firstGrapheme(s) {
   }
 }
 
-
-// Parents: turn Face ID unlock on/off for this phone (shown only where the phone supports it).
-function bioToggle() {
-  const s = identity.session;
-  if (!bioAvailable() || !s || !s.parent) return null;
-  const on = !!bioFor(s.parent.id);
-  return h('button', { class: 'menu-btn', testid: 'menu-bio', onclick: async () => {
-    if (on) { forgetBio(); snackbar(bioName() + ' is off'); closeSheets(); return; }
-    closeSheets();
-    await setupBio(s.parent);
-  } }, '🙂 ' + bioName() + ' unlock', h('span', { class: 'tag' }, on ? 'On' : 'Off'));
-}

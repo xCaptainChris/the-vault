@@ -68,7 +68,6 @@ function render() {
           h('span', { class: 'num ' + (t.amountCents >= 0 ? 'txamt in' : 'txamt out') }, fmtSigned(t.amountCents))),
         h('div', {}, t.note || ''),
         g.tithe && h('div', { class: 'apmeta', testid: 'approval-tithe-' + t.id }, `(−${fmtCents(-g.tithe.amountCents)} tithing)`),
-        balLine(v, t, g),
         h('div', { class: 'apmeta' }, meta)));
 
     if (st.mode) {
@@ -88,13 +87,4 @@ function render() {
     }
     body.append(card);
   });
-}
-
-// Spends show what the balance would become, so a parent can't approve a kid below zero by accident.
-function balLine(v, t, g) {
-  if (t.amountCents >= 0) return null;
-  const before = S.balanceOf(v, t.kidId);
-  const after = before + t.amountCents + (g.tithe ? g.tithe.amountCents : 0);
-  return h('div', { class: 'apbal' + (after < 0 ? ' neg' : ''), testid: 'approval-bal-' + t.id },
-    'Balance ', h('b', { class: 'num' }, fmtCents(before)), ' → ', h('b', { class: 'num' }, fmtCents(after)), after < 0 ? ' ⚠️' : '');
 }

@@ -156,7 +156,7 @@ function refresh() {
   // tithing toggle (new, money in, not tithing category)
   const cents = currentCents();
   els.titheSlot.innerHTML = '';
-  if (!edit && st.dir === 'in' && isParent()) {          // kids are asked when they send (v1.1.2)
+  if (!edit && st.dir === 'in') {
     const tc = titheCents(cents || 0, CONFIG.TITHE_RATE_PCT);
     const t = h('button', { class: 'toggle' + (st.tithe ? ' on' : ''), testid: 'entry-tithe-toggle', 'aria-pressed': String(st.tithe),
       onclick: () => { st.tithe = !st.tithe; setPref('titheByUser', { ...(prefs().titheByUser || {}), [titheKey()]: st.tithe }); refresh(); } },
@@ -223,44 +223,17 @@ function saveNew() {
   const f = readForm();
   if (!f) return;
   const parent = isParent();
-  // Kids decide about tithing each time: a small question when they send money they're asking for.
-  if (!parent && st.dir === 'in' && st.cat !== 'Tithing') {
-    const pending = { kidId: st.kidId, cat: st.cat, f };
-    closeSheets();
-    setTimeout(() => askTithe(pending), 320);
-    return;
-  }
-  sendNew(f, st.dir === 'in' && st.tithe && st.cat !== 'Tithing');
-}
-
-function askTithe({ kidId, cat, f }) {
-  const tc = titheCents(f.cents, CONFIG.TITHE_RATE_PCT);
-  const body = byId('titheAskSheet').querySelector('.body');
-  body.innerHTML = '';
-  const go = (yes) => { closeSheets(); sendNew(f, yes, { kidId, cat, dir: 'in' }); };
-  body.append(
-    h('div', { class: 'askicon' }, '⛪'),
-    h('div', { class: 'asktitle', testid: 'tithe-ask-title' }, `Would you like to set aside ${CONFIG.TITHE_RATE_PCT}% (${fmtCents(tc)}) for tithing?`),
-    h('div', { class: 'asksub' }, `You asked for ${fmtCents(f.cents)}${f.note ? ' · ' + f.note : ''}`),
-    h('div', { class: 'approve-row' },
-      h('button', { class: 'btn-ok', testid: 'tithe-ask-yes', onclick: () => go(true) }, 'Yes'),
-      h('button', { class: 'btn-no plain', testid: 'tithe-ask-no', onclick: () => go(false) }, 'No')));
-  openSheet('titheAskSheet', { locked: true });
-}
-
-function sendNew(f, withTithe, ctx = st) {
-  const parent = isParent();
-  const signed = ctx.dir === 'in' ? f.cents : -f.cents;
+  const signed = st.dir === 'in' ? f.cents : -f.cents;
   const clientTime = new Date().toISOString();
-  const main = { id: newId('t_'), kidId: ctx.kidId, amountCents: signed, category: ctx.cat, note: f.note, clientTime };
+  const main = { id: newId('t_'), kidId: st.kidId, amountCents: signed, category: st.cat, note: f.note, clientTime };
   const txs = [main];
-  if (withTithe) {
+  if (st.dir === 'in' && st.tithe && st.cat !== 'Tithing') {
     const groupId = newId('g_');
     main.groupId = groupId;
-    txs.push({ id: newId('t_'), kidId: ctx.kidId, amountCents: -titheCents(f.cents, CONFIG.TITHE_RATE_PCT), category: 'Tithing',
-      note: ('Tithing · ' + (f.note || ctx.cat)).slice(0, 80), clientTime, groupId });
+    txs.push({ id: newId('t_'), kidId: st.kidId, amountCents: -titheCents(f.cents, CONFIG.TITHE_RATE_PCT), category: 'Tithing',
+      note: ('Tithing · ' + (f.note || st.cat)).slice(0, 80), clientTime, groupId });
   }
-  if (parent) setPref('lastKid', ctx.kidId);
+  if (parent) setPref('lastKid', st.kidId);
   closeSheets();
   write([['add', { txs }]], parent ? 'Saved' : 'Request sent');
 }

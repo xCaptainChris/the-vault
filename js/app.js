@@ -12,7 +12,6 @@ import { createOutbox } from './outbox.js';
 import { router } from './router.js';
 import * as selectors from './selectors.js';
 import { registerServiceWorker } from './platform.js';
-import { checkBio } from './bio.js';
 import { byId, snackbar } from './ui/dom.js';
 import { initSheets, closeSheets } from './ui/sheet.js';
 import { renderHeader } from './ui/header.js';
@@ -26,7 +25,6 @@ import { refreshDonut } from './ui/donut.js';
 import { initWho, openWho, refreshWho, showDeviceModal, signOut } from './ui/who.js';
 import { initLock, lockNow, forgetPin } from './ui/lock.js';
 import { refreshTxCard, initTxCard } from './ui/txcard.js';
-import { initDecisions } from './ui/decisions.js';
 import { openAccount, openSettings, refreshSettings } from './ui/settings.js';
 
 /* ---------------- outbox ---------------- */
@@ -75,14 +73,12 @@ function render() {
 
   const u = identity.user;
   const fab = byId('fab');
-  // A kid looking at a sibling's page has nothing to ask for there.
-  fab.hidden = !u || (!identity.isParent && onKid && r.kidId !== u.id);
+  fab.hidden = !u;
   const parent = identity.isParent;
   fab.textContent = parent ? '＋ Add / Spend' : '＋ Ask';
   fab.classList.toggle('request', !parent);
 
   document.documentElement.classList.toggle('kid-page', onKid);
-  document.documentElement.classList.toggle('home-page', !onKid);
   refreshEntry(); refreshTxCard(); refreshApprovals(); refreshTithe(); refreshFamily(); refreshDonut(); refreshSettings(); refreshWho();
 }
 store.subscribe(render);
@@ -92,7 +88,6 @@ router.onChange(() => render());
 initSheets();
 initTxCard();
 initKidTithe();
-initDecisions();
 initWho({ onUserChanged: () => store.emit() });
 initLock({ onSwitchUser: () => signOut(), onSignedOut: (msg) => signOut(msg) });
 byId('fab').addEventListener('click', openEntryNew);
@@ -144,8 +139,6 @@ setInterval(() => {
 
 /* ---------------- boot ---------------- */
 if (isDemo) window.__vault = { store, outbox, mock: mockHooks, selectors, api, identity, config: CONFIG };
-checkBio();
-
 render();
 registerServiceWorker((apply) => snackbar('Update ready', { action: 'Reload', onAction: apply, ms: Infinity }));
 if (!identity.device.name) showDeviceModal(false);

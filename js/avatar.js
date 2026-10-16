@@ -171,7 +171,6 @@ const STREAK_PATHS = {
   long: 'M40,23 C36,28 33,34 31,42 M50,21 C48,26 47,30 47,33 M60,23 C64,28 67,34 69,42 M25,50 C24,60 23,68 24,76 M75,50 C76,60 77,68 76,76',
 };
 
-let seq = 0;
 // Returns an SVG string. opts: { bg: '#hex' | null, size: px, id, shirt: fallback shirt color }
 export function avatarSvg(spec, opts = {}) {
   const s = normalize(spec || DEFAULT);
@@ -185,9 +184,7 @@ export function avatarSvg(spec, opts = {}) {
   const shirt = s.shirt || opts.shirt || '#f1ead8';
   const has = (id) => s.acc.includes(id);
   const p = [];
-  const uid = opts.id || ('av' + (++seq));             // ids must be unique per page (clip paths)
-  const hatted = has('cap') || has('bnt');               // tall styles get tucked under a hat
-  const hairId = hatted && s.hair === 'spk' ? 'swp' : hatted && s.hair === 'mhk' ? 'buz' : s.hair;
+  const uid = opts.id || 'av';
 
   p.push(`<defs><clipPath id="${uid}c"><circle cx="50" cy="50" r="50"/></clipPath></defs><g clip-path="url(#${uid}c)">`);
   if (opts.bg) p.push(`<rect width="100" height="100" fill="${opts.bg}"/>`);
@@ -199,7 +196,7 @@ export function avatarSvg(spec, opts = {}) {
   if (s.hair === 'cur') p.push(circles([[28, 30, 9], [72, 30, 9], [24, 44, 9], [76, 44, 9], [24, 58, 9], [76, 58, 9], [27, 70, 8.5], [73, 70, 8.5], [38, 20, 9], [62, 20, 9], [50, 16, 9]], hair));
   if (s.hair === 'pig') p.push(`<circle cx="24" cy="50" r="9" fill="${hair}"/><circle cx="76" cy="50" r="9" fill="${hair}"/><circle cx="29" cy="45" r="2.2" fill="#e8577e"/><circle cx="71" cy="45" r="2.2" fill="#e8577e"/>`);
   if (s.hair === 'pny') p.push(`<path d="M66,26 C80,24 84,40 78,56 C76,62 70,64 70,58 C74,46 72,36 64,32 Z" fill="${hair}"/><circle cx="67" cy="28" r="3" fill="${hairDk}"/>`);
-  if (s.hair === 'bun' && !hatted) p.push(`<circle cx="50" cy="16" r="9" fill="${hair}"/><path d="M44,16 Q50,20 56,16" stroke="${hairDk}" stroke-width="1" fill="none"/><rect x="43" y="22" width="14" height="3.4" rx="1.7" fill="#e8577e"/>`);
+  if (s.hair === 'bun') p.push(`<circle cx="50" cy="16" r="9" fill="${hair}"/><path d="M44,16 Q50,20 56,16" stroke="${hairDk}" stroke-width="1" fill="none"/><rect x="43" y="22" width="14" height="3.4" rx="1.7" fill="#e8577e"/>`);
 
   // ---- body ----
   p.push(`<path d="M18,104 C18,86 30,79 50,79 C70,79 82,86 82,104 Z" fill="${shirt}"/>`);
@@ -229,19 +226,19 @@ export function avatarSvg(spec, opts = {}) {
   if (!has('tpt')) p.push(`<path d="M45,59.5 Q50,64 55,59.5" stroke="#9c3b32" stroke-width="1.5" fill="none" stroke-linecap="round"/>`);
 
   // ---- front hair ----
-  if (hairId === 'mhk') p.push(`<path d="${HAIR_FRONT.buz}" fill="${hair}" opacity=".45"/>`);
-  p.push(`<path d="${HAIR_FRONT[hairId]}" fill="${hair}"/>`);
+  if (s.hair === 'mhk') p.push(`<path d="${HAIR_FRONT.buz}" fill="${hair}" opacity=".45"/>`);
+  p.push(`<path d="${HAIR_FRONT[s.hair]}" fill="${hair}"/>`);
   if (s.hair === 'bcr') p.push(circles([[31, 41, 5], [33, 33, 5.5], [39, 27, 5.8], [46, 23.5, 5.8], [54, 23.5, 5.8], [61, 27, 5.8], [67, 33, 5.5], [69, 41, 5]], hair) + circles([[36, 31, 1.6], [50, 24, 1.6], [64, 31, 1.6]], hairLt));
   if (s.hair === 'cur') p.push(circles([[32, 38, 5.5], [37, 30, 6], [45, 25, 6], [55, 25, 6], [63, 30, 6], [68, 38, 5.5]], hair) + circles([[40, 29, 1.6], [56, 25, 1.6], [66, 36, 1.4]], hairLt));
   if (s.hair === 'ice') p.push(`<path d="M37,34 C43,27 54,25 63,30" stroke="${hairLt}" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".8"/>`);
-  if (s.streak && hairId !== 'mhk') {
-    const sp = ['lng', 'shd', 'bob'].includes(hairId) ? STREAK_PATHS.long : STREAK_PATHS.default;
+  if (s.streak && s.hair !== 'mhk') {
+    const sp = ['lng', 'shd', 'bob'].includes(s.hair) ? STREAK_PATHS.long : STREAK_PATHS.default;
     // Clipped to the hair itself so a streak can never land on the face or the background.
-    const shapes = [HAIR_FRONT[hairId], HAIR_BACK[hairId]].filter(Boolean).map(d => `<path d="${d}"/>`).join('')
+    const shapes = [HAIR_FRONT[s.hair], HAIR_BACK[s.hair]].filter(Boolean).map(d => `<path d="${d}"/>`).join('')
       + (s.hair === 'bcr' || s.hair === 'cur' ? `<path d="${CAP}"/>` : '');
     p.push(`<clipPath id="${uid}h">${shapes}</clipPath><path d="${sp}" clip-path="url(#${uid}h)" stroke="${s.streak}" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".95"/>`);
   }
-  if (s.streak && hairId === 'mhk') p.push(`<path d="M47,14 L48,27 M53,14 L52,27" stroke="${s.streak}" stroke-width="2.2" stroke-linecap="round"/>`);
+  if (s.streak && s.hair === 'mhk') p.push(`<path d="M47,14 L48,27 M53,14 L52,27" stroke="${s.streak}" stroke-width="2.2" stroke-linecap="round"/>`);
 
   // ---- glasses ----
   if (has('glr')) p.push(`<g fill="none" stroke="#2a2a33" stroke-width="1.3"><circle cx="42" cy="50" r="5"/><circle cx="58" cy="50" r="5"/><path d="M47,49.5 Q50,48 53,49.5 M37,49 L31,47.5 M63,49 L69,47.5"/></g>`);
@@ -260,22 +257,7 @@ export function avatarSvg(spec, opts = {}) {
 
   // ---- things held in hand ----
   if (has('wnd')) p.push(`<path d="M66,88 L80,58" stroke="#5b3a8c" stroke-width="2.4" stroke-linecap="round"/><path d="M80.5,49 L82.6,54.4 L88.4,54.6 L83.8,58.2 L85.4,63.8 L80.5,60.5 L75.6,63.8 L77.2,58.2 L72.6,54.6 L78.4,54.4 Z" fill="#ffd65a" stroke="#f2b632" stroke-width=".6"/><circle cx="72" cy="50" r=".9" fill="#ffffff"/><circle cx="88" cy="48" r="1.1" fill="#ffd65a"/><circle cx="86" cy="66" r=".8" fill="#ffffff"/>` + `<ellipse cx="65" cy="88" rx="5" ry="4.4" fill="${skin}"/><path d="M61.5,86 L68.5,86" stroke="${skinDk}" stroke-width=".8" stroke-linecap="round"/>`);
-  // Trumpet, side view: mouthpiece at the lips, lead pipe, three valves with finger buttons, the tuning
-  // loop underneath and a flared bell. The hand holds the valves from below.
-  if (has('tpt')) {
-    const G = '#f2c94c', D = '#c9921f', L = '#fff1b8';
-    p.push(`<g stroke-linecap="round" stroke-linejoin="round">`
-      + `<path d="M58,64 L58,68.5 Q58,71.5 61,71.5 L71,71.5 Q74,71.5 74,68.5 L74,63.5" fill="none" stroke="${D}" stroke-width="2.2"/>`
-      + `<path d="M52,62 L75,62" stroke="${G}" stroke-width="3.2"/>`
-      + `<path d="M53,61.3 L74,61.3" stroke="${L}" stroke-width=".7" opacity=".9"/>`
-      + `<path d="M74,60.3 C78,60 80.5,58.6 84,56.2 L84,67.8 C80.5,65.4 78,64 74,63.7 Z" fill="${G}"/>`
-      + `<ellipse cx="84" cy="62" rx="1.8" ry="5.9" fill="${D}"/><ellipse cx="84.4" cy="62" rx=".9" ry="4.3" fill="#7a5410"/>`
-      + [59.5, 63.5, 67.5].map(x => `<rect x="${x - 1.4}" y="58.2" width="2.8" height="9" rx="1" fill="${G}" stroke="${D}" stroke-width=".5"/><rect x="${x - .7}" y="55.6" width="1.4" height="2.8" fill="${D}"/><ellipse cx="${x}" cy="55.4" rx="1.7" ry=".8" fill="${G}" stroke="${D}" stroke-width=".4"/>`).join('')
-      + `<path d="M49.6,59.8 L52.2,61 L52.2,63 L49.6,64.2 Z" fill="${D}"/>`
-      + `</g>`
-      + `<ellipse cx="63.5" cy="69.6" rx="6" ry="3.6" fill="${skin}"/><path d="M59.5,68.4 L67.5,68.4" stroke="${skinDk}" stroke-width=".7" stroke-linecap="round"/>`);
-    p.push(`<circle cx="44" cy="58.2" r="3" fill="#f08a7e" opacity=".45"/>`);    // puffed cheek
-  }
+  if (has('tpt')) p.push(`<g><path d="M53,61.4 L75,61.4 L75,64.6 L53,64.6 Z" fill="#e7b43c"/><path d="M73,58.5 C78,57.8 81.5,56 85,53.5 L85,72.5 C81.5,70 78,68.2 73,67.5 Z" fill="#f2c94c"/><ellipse cx="85" cy="63" rx="2" ry="9.5" fill="#d39b26"/><rect x="58.5" y="56.5" width="2.2" height="5.5" rx="1" fill="#d39b26"/><rect x="62.5" y="56.5" width="2.2" height="5.5" rx="1" fill="#d39b26"/><rect x="66.5" y="56.5" width="2.2" height="5.5" rx="1" fill="#d39b26"/><circle cx="52.8" cy="63" r="2.2" fill="#d39b26"/><path d="M55,62.2 L73,62.2" stroke="#fff3c4" stroke-width=".8" opacity=".8"/></g>` + `<ellipse cx="63" cy="67.8" rx="5" ry="4" fill="${skin}"/><path d="M59.6,66.4 L66.4,66.4" stroke="${skinDk}" stroke-width=".8" stroke-linecap="round"/>`);
 
   p.push('</g></g>');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${size}" height="${size}" role="img" aria-label="Avatar">${p.join('')}</svg>`;

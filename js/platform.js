@@ -39,12 +39,6 @@ export function registerServiceWorker(onUpdate) {
         if (w.state === 'installed' && navigator.serviceWorker.controller) notify(w);
       });
     });
-    // Coming back to the app with an update already downloaded: just apply it (nothing is mid-edit
-    // after a trip to the background, and the outbox is saved), so a missed "Reload" can't strand it.
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) return;
-      if (reg.waiting && navigator.serviceWorker.controller) { reg.waiting.postMessage('SKIP_WAITING'); return; }
-      reg.update().catch(() => {});
-    });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
   }).catch(() => { /* offline or blocked */ });
 }

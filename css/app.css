@@ -116,7 +116,7 @@ header.app .spacer { flex: 1; }
 .goalbar { margin-top: 14px; }
 .goalbar .gtext { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 6px; gap: 8px; }
 .goalbar .track { height: 8px; border-radius: 99px; background: rgba(0,0,0,.2); overflow: hidden; }
-.goalbar .fill { height: 100%; border-radius: 99px; background: rgba(0,0,0,.55); transition: width .6s ease; }
+.goalbar .fill { height: 100%; border-radius: 99px; background: rgba(255,255,255,.9); transition: width .6s ease; }
 .goalreached { display: inline-block; margin-top: 10px; padding: 5px 12px; border-radius: 99px; background: rgba(0,0,0,.3); color: #fff; font-weight: 800; font-size: 13px; }
 
 .pill {
@@ -131,10 +131,10 @@ header.app .spacer { flex: 1; }
 .panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; text-align: left; display: block; width: 100%; }
 .panel h3 { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .catrow { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 8px; }
-.catrow .cname { width: 64px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.catrow .ctrack { flex: 1; height: 6px; background: var(--raised); border-radius: 99px; overflow: hidden; }
+.catrow .cname { flex: 0 1 42%; min-width: 0; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.catrow .ctrack { flex: 1 1 16px; min-width: 16px; height: 6px; background: var(--raised); border-radius: 99px; overflow: hidden; }
 .catrow .cfill { display: block; height: 100%; border-radius: 99px; }
-.catrow .cval { width: 56px; text-align: right; font-weight: 600; font-size: 12px; }
+.catrow .cval { flex: none; text-align: right; font-weight: 600; font-size: 12px; }
 .empty { color: var(--muted); font-size: 13px; padding: 6px 0; }
 
 .ledger {
@@ -158,7 +158,9 @@ header.app .spacer { flex: 1; }
 .txrow { display: flex; align-items: center; gap: 12px; padding: 13px 14px; cursor: pointer; }
 .txicon { width: 38px; height: 38px; border-radius: 12px; background: var(--raised); display: grid; place-items: center; font-size: 16px; flex-shrink: 0; }
 .txmain { flex: 1; min-width: 0; }
-.txdesc { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.txdesc { font-weight: 600; font-size: 14px; display: flex; align-items: baseline; gap: 6px; min-width: 0; white-space: nowrap; }
+.txdesc .tdtext { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.txdesc > span:not(.tdtext) { flex: none; }
 .txmeta { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .txamt { font-weight: 700; font-size: 15px; white-space: nowrap; }
 .txamt.in { color: var(--credit); }
@@ -440,9 +442,70 @@ html.app-locked .fab { display: none; }
   html.kid-page .colright .flabel { flex: none; margin-top: 2px; }
   html.kid-page .ledger { flex: 1; min-height: 0; max-height: none; }
   html.kid-page .ledger::after { content: ''; display: block; height: 76px; }   /* last row clears the button */
-  html.kid-page .hero { padding: 18px 20px; }
-  html.kid-page .split { margin-bottom: 10px; }
+  html.kid-page .hero { padding: 14px 16px; text-align: left; margin-bottom: 10px; }
+  html.kid-page .herotop { flex-direction: row; align-items: center; gap: 14px; }
+  html.kid-page .heroav, html.kid-page .heroav svg { width: 64px; height: 64px; margin: 0; flex: none; }
+  html.kid-page .heroav.heroemo { font-size: 32px; }
+  html.kid-page .hero .big { font-size: 36px; margin: 0; line-height: 1.1; }
+  html.kid-page .goalbar { margin-top: 10px; }
+  html.kid-page #view-kid .back { padding: 0; min-height: 40px; }
+  html.kid-page #pillSlot { margin-bottom: 10px; }
+  html.kid-page .split { gap: 10px; margin-bottom: 8px; }
+  html.kid-page .panel { padding: 9px 12px; }
+  html.kid-page .panel h3 { margin-bottom: 0; font-size: 11px; letter-spacing: 1px; white-space: nowrap; }
+  html.kid-page .panel h3 .more { font-size: 10px; letter-spacing: 0; }
+  html.kid-page .ptot { margin: 0; font-size: 18px; }
+  html.kid-page .pcats { display: none; }
 }
+
+/* Phones: the family home holds still and fits four kids' cards without scrolling. */
+@media (max-width: 639px) and (min-height: 600px) {
+  html.home-page, html.home-page body { height: 100%; overflow: hidden; }
+  html.home-page .wrap { height: 100dvh; display: flex; flex-direction: column; padding-bottom: 0; }
+  html.home-page header.app { flex: none; }
+  html.home-page #view-home.active { flex: 1; min-height: 0; display: flex; flex-direction: column; padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+  html.home-page #homeTop { flex: none; }
+  html.home-page .cards { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; gap: 10px; grid-auto-rows: minmax(118px, 132px); align-content: start; }
+  html.home-page .bankcard { min-height: 0; padding: 14px 16px; }
+  html.home-page .bankcard .kbal { font-size: 28px; }
+}
+
+/* v1.1.1: hero face + compact goal, pills, totals */
+.herotop { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.herobal { min-width: 0; }
+.heroav.heroemo { display: grid; place-items: center; width: 84px; height: 84px; border-radius: 50%; background: rgba(255,255,255,.25); font-size: 42px; line-height: 1; color: inherit; }
+.goalbar .gname { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.goalbar .goalbtn, .goalnone .goalbtn { margin: -8px 0; padding: 0 2px; min-height: 40px; min-width: 0; background: none; font-size: 11px; }
+.goalbtn .gpill { display: inline-block; padding: 4px 10px; border-radius: 99px; background: rgba(0,0,0,.35); color: #fff; }
+.goalnone { margin-top: 14px; }
+.goalbar.reached .fill { background: #fff; box-shadow: 0 0 10px rgba(255,255,255,.6); }
+.greached { font-weight: 800; }
+#pillSlot { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+#pillSlot:empty { display: none; }
+#pillSlot .pill { flex: 1 1 auto; width: auto; margin: 0; padding: 9px 12px; font-size: 13px; }
+.pill .sub { color: var(--muted); font-size: 11px; font-weight: 600; }
+.ptot { font-size: 22px; font-weight: 800; margin: -4px 0 8px; }
+.ptot.in { color: var(--credit); }
+.ptot.out { color: var(--debit); }
+.apbal { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.apbal b { color: var(--ink); }
+.apbal.neg b:last-of-type { color: var(--debit); }
+
+/* v1.1.1: "Dad said yes!" card */
+.declist { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 14px; }
+.decrow { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 14px; background: var(--raised); text-align: left; }
+.decrow .dmark { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; flex: none; }
+.decrow.ok .dmark { background: rgba(76,217,100,.18); color: var(--credit); }
+.decrow.no .dmark { background: rgba(255,107,94,.18); color: var(--debit); }
+.decrow .dmain { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.decrow .dnote { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.decrow .dwho { font-size: 12px; color: var(--muted); }
+.decrow .damt { font-weight: 800; }
+.decrow.ok .damt { color: var(--credit); }
+.decrow .damt.struck { color: var(--muted); text-decoration: line-through; }
+.dreason { margin: -4px 0 2px 54px; font-size: 14px; font-style: italic; color: var(--ink); }
+.dreason .rq { color: var(--muted); }
+.dmore { font-size: 12px; color: var(--muted); text-align: center; }
 
 /* Tithing: per-kid pay buttons, kid pill */
 .legrow.titherow { gap: 10px; }
@@ -456,7 +519,7 @@ html.app-locked .fab { display: none; }
 /* ---- v1.1: avatars ---- */
 .heroav { display: block; width: 84px; height: 84px; margin: -4px auto 8px; border-radius: 50%; position: relative; padding: 0; min-width: 0; }
 .heroav svg { display: block; width: 84px; height: 84px; border-radius: 50%; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
-.heroav .avedit { position: absolute; right: -2px; bottom: 2px; width: 26px; height: 26px; border-radius: 50%; background: #0c0c10; color: #fff; font-size: 13px; display: grid; place-items: center; border: 2px solid rgba(255,255,255,.7); }
+.heroav .avedit { position: absolute; left: -2px; bottom: 2px; width: 26px; height: 26px; border-radius: 50%; background: #0c0c10; color: #fff; font-size: 13px; display: grid; place-items: center; border: 2px solid rgba(255,255,255,.7); }
 .bankcard .kemoji.kav { line-height: 0; }
 .bankcard .kemoji.kav svg { width: 44px; height: 44px; border-radius: 50%; display: block; }
 .chipav { display: inline-block; width: 26px; height: 26px; margin: -4px 6px -6px -6px; vertical-align: middle; }

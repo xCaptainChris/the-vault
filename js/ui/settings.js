@@ -6,6 +6,7 @@ import { openSheet, closeSheets, isOpen } from './sheet.js';
 import { identity } from '../identity.js';
 import { store } from '../store.js';
 import { CONFIG } from '../config.js';
+import { viewLogLines } from '../viewlog.js';
 import { isDemo } from '../env.js';
 import { newId } from '../ids.js';
 import { write } from '../actions.js';
@@ -77,7 +78,11 @@ function renderSettings() {
   if (CONFIG.SHEET_URL) body.append(h('button', { class: 'primary plain', testid: 'settings-open-sheet', onclick: () => openExternal(CONFIG.SHEET_URL) }, 'Open the Sheet'));
   body.append(h('button', { class: 'primary ghost', testid: 'settings-signout', onclick: () => signOut() }, 'Sign out'));
   body.append(h('div', { class: 'version', testid: 'settings-version' }, `v${CONFIG.APP_VERSION} · ${isDemo ? 'demo' : 'live'}`));
-  body.append(h('div', { class: 'version', testid: 'settings-screen' }, screenInfo()));
+  const scr = h('div', { class: 'version', testid: 'settings-screen' }, screenInfo());
+  const logBox = h('pre', { class: 'viewlog', testid: 'settings-viewlog' });
+  logBox.hidden = true;
+  scr.addEventListener('click', () => { logBox.textContent = viewLogLines().slice().reverse().join('\n') || 'No entries yet'; logBox.hidden = !logBox.hidden; });
+  body.append(scr, logBox);
   body.parentElement.scrollTop = keep;
 }
 

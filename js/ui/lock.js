@@ -9,6 +9,7 @@ import * as storage from '../storage.js';
 import { api } from '../api/index.js';
 import { store } from '../store.js';
 import { closeSheets } from './sheet.js';
+import { viewLog } from '../viewlog.js';
 
 export const LOCK_AFTER_MS = 30 * 1000;
 const MAX_TRIES = 5;
@@ -42,6 +43,7 @@ export function lockNow() {
   byId('lockInput').value = '';
   byId('lockError').hidden = true;
   document.documentElement.classList.add('app-locked');
+  viewLog('PIN screen shown' + (bioFor(s.parent.id) ? ' (Face ID)' : ''));
   byId('lockModal').classList.add('show');
   const bio = s && s.parent && bioFor(s.parent.id);
   const bb = byId('lockBio');
@@ -85,6 +87,7 @@ function unlock() {
   locked = false;
   tries = 0;
   document.documentElement.classList.remove('app-locked');
+  viewLog('unlocked');
   byId('lockModal').classList.remove('show');
   byId('lockInput').blur();
 }

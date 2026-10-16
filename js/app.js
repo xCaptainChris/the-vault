@@ -1,6 +1,7 @@
 // Boot: env → identity → store.loadCache → render → router → registerSW →
 // first-run modals → store.refresh → outbox.drain → poll timer.
 import { CONFIG } from './config.js';
+import { viewLog } from './viewlog.js';
 import { isDemo, undoMs } from './env.js';
 import * as storage from './storage.js';
 import { api } from './api/index.js';
@@ -88,22 +89,46 @@ function render() {
 // Phone pages lock in place (no page scroll) — but only after launch: on the first tap or 1.5 s in, and
 // unlocked again while the app is in the background. iOS 27 sizes a Home Screen app from the page it
 // launches/resumes on; if that page can't scroll, the app gets a screen 62pt short for the whole session.
+// v1.2.1: iOS can still hand the app a short screen later (seen right after the PIN/Face ID screen at
+// launch). While the screen is short the page stays unlocked (scrollable) so iOS can correct it, and every
+// size change is logged (viewlog.js) so we can see exactly which moment shrinks it.
+const isShortScreen = () => navigator.standalone === true && matchMedia('(orientation: portrait)').matches
+  && innerHeight < Math.max(screen.width, screen.height) - 30;
 let lockTimer = null;
 function settleLayout() {
   clearTimeout(lockTimer); lockTimer = null;
   if (document.documentElement.classList.contains('page-lock')) return;
+  if (isShortScreen()) { viewLog('lock skipped: short'); return; }
   document.documentElement.classList.add('page-lock');
   window.scrollTo(0, 0);
+  viewLog('lock on');
 }
-function unsettleLayout() {
+function unsettleLayout(why) {
   clearTimeout(lockTimer);
+  if (!document.documentElement.classList.contains('page-lock')) return;
   document.documentElement.classList.remove('page-lock');
+  viewLog('lock off: ' + why);
 }
 addEventListener('pointerdown', settleLayout, { capture: true, passive: true });
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) unsettleLayout();
+  viewLog(document.hidden ? 'to background' : 'to foreground');
+  if (document.hidden) unsettleLayout('background');
   else { clearTimeout(lockTimer); lockTimer = setTimeout(settleLayout, 1500); }
 });
+let lastH = innerHeight;
+addEventListener('resize', () => {
+  if (innerHeight === lastH) return;
+  lastH = innerHeight;
+  viewLog('resize');
+  if (isShortScreen()) unsettleLayout('short screen');
+  else if (!document.hidden) { clearTimeout(lockTimer); lockTimer = setTimeout(settleLayout, 300); }
+});
+addEventListener('pageshow', e => viewLog(e.persisted ? 'pageshow (restored)' : 'pageshow'));
+addEventListener('pagehide', () => viewLog('pagehide'));
+addEventListener('blur', () => viewLog('blur'));
+addEventListener('focus', () => viewLog('focus'));
+if (window.visualViewport) visualViewport.addEventListener('resize', () => viewLog('vv resize'));
+viewLog('launch v' + CONFIG.APP_VERSION + (navigator.standalone ? ' app' : ' browser') + ' screen ' + screen.width + '×' + screen.height);
 lockTimer = setTimeout(settleLayout, 1500);
 
 store.subscribe(render);

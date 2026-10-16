@@ -2,7 +2,8 @@
 // (cold start, or coming back after LOCK_AFTER_MS in the background). Kids are never locked.
 // The PIN is checked against a salted hash saved at sign-in, so unlocking works offline; if that
 // fails (or no hash yet) and we're online, the server checks it and the hash is refreshed.
-import { byId } from './dom.js';
+import { byId, snackbar } from './dom.js';
+import { bioFor, verifyBio, enrollBio, bioAvailable, forgetBio, bioName } from '../bio.js';
 import { identity } from '../identity.js';
 import * as storage from '../storage.js';
 import { api } from '../api/index.js';
@@ -26,6 +27,7 @@ async function hashPin(parentId, pin) {
 export async function rememberPin(parentId, pin) {
   try { storage.set('pinCheck', { parentId, hash: await hashPin(parentId, pin) }); } catch (e) { /* no crypto: server check only */ }
 }
+// Face ID stays set up through sign-outs and switching to a kid; only the menu (or too many wrong PINs) turns it off.
 export function forgetPin() { storage.del('pinCheck'); }
 
 export function isLocked() { return locked; }
@@ -41,8 +43,42 @@ export function lockNow() {
   byId('lockError').hidden = true;
   document.documentElement.classList.add('app-locked');
   byId('lockModal').classList.add('show');
-  setTimeout(() => byId('lockInput').focus(), 60);
+  const bio = s && s.parent && bioFor(s.parent.id);
+  const bb = byId('lockBio');
+  bb.hidden = !bio;
+  bb.textContent = 'Unlock with ' + bioName();
+  if (bio) setTimeout(() => tryBio(true), 250);           // pops Face ID straight away when iOS allows it
+  else setTimeout(() => byId('lockInput').focus(), 60);
   return true;
+}
+
+let bioBusy = false;
+async function tryBio(auto) {
+  const s = identity.session;
+  if (!locked || bioBusy || !s || !s.parent) return;
+  bioBusy = true;
+  try {
+    if (await verifyBio(s.parent.id)) { unlock(); return; }
+  } catch (e) {
+    // Cancelled, or iOS wants a tap first (auto attempt): the button and the PIN both still work.
+    if (!auto && e && e.name !== 'NotAllowedError') { const err = byId('lockError'); err.hidden = false; err.textContent = bioName() + ' didn’t work — use your PIN'; }
+  } finally { bioBusy = false; }
+}
+
+// After a PIN unlock: offer Face ID once per device (the account menu can turn it on any time).
+function maybeOfferBio() {
+  const s = identity.session;
+  if (!s || !s.parent || !bioAvailable() || bioFor(s.parent.id) || storage.get('bioOffered')) return;
+  storage.set('bioOffered', true);
+  const parent = s.parent;
+  setTimeout(() => snackbar(`Unlock with ${bioName()} next time?`, { action: 'Turn on', ms: 9000, onAction: () => setupBio(parent) }), 600);
+}
+
+export async function setupBio(parent) {
+  try {
+    if (await enrollBio(parent)) { snackbar(bioName() + ' is on for this phone'); return true; }
+  } catch (e) { snackbar(bioName() + ' wasn’t set up'); }
+  return false;
 }
 
 function unlock() {
@@ -66,7 +102,7 @@ async function submit() {
   btn.disabled = true;
   try {
     const saved = storage.get('pinCheck');
-    if (saved && saved.parentId === s.parent.id && saved.hash === await hashPin(s.parent.id, pin)) { unlock(); return; }
+    if (saved && saved.parentId === s.parent.id && saved.hash === await hashPin(s.parent.id, pin)) { unlock(); maybeOfferBio(); return; }
     // Local check failed (or no hash yet): ask the server — the PIN may have changed in the Sheet.
     try {
       const dev = identity.device;
@@ -77,6 +113,7 @@ async function submit() {
       if (old && old !== res.token) store.queue('logout', {}, { token: old, immediate: true });
       await rememberPin(res.parent.id, pin);
       unlock();
+      maybeOfferBio();
       store.outbox.drain();
       return;
     } catch (e) {
@@ -88,6 +125,7 @@ async function submit() {
     if (tries >= MAX_TRIES) {
       unlock();
       forgetPin();
+      forgetBio();
       hooks.onSignedOut('Too many wrong PINs — signed out');
       return;
     }
@@ -102,6 +140,7 @@ async function submit() {
 export function initLock(h2) {
   hooks = { ...hooks, ...h2 };
   byId('lockBtn').addEventListener('click', submit);
+  byId('lockBio').addEventListener('click', () => tryBio(false));
   byId('lockInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
   byId('lockSwitch').addEventListener('click', () => { unlock(); hooks.onSwitchUser(); });
   document.addEventListener('visibilitychange', () => {

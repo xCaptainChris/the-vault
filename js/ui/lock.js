@@ -27,7 +27,8 @@ async function hashPin(parentId, pin) {
 export async function rememberPin(parentId, pin) {
   try { storage.set('pinCheck', { parentId, hash: await hashPin(parentId, pin) }); } catch (e) { /* no crypto: server check only */ }
 }
-export function forgetPin() { storage.del('pinCheck'); forgetBio(); }
+// Face ID stays set up through sign-outs and switching to a kid; only the menu (or too many wrong PINs) turns it off.
+export function forgetPin() { storage.del('pinCheck'); }
 
 export function isLocked() { return locked; }
 
@@ -124,6 +125,7 @@ async function submit() {
     if (tries >= MAX_TRIES) {
       unlock();
       forgetPin();
+      forgetBio();
       hooks.onSignedOut('Too many wrong PINs — signed out');
       return;
     }

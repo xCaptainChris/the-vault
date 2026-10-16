@@ -9,6 +9,8 @@ import * as S from '../selectors.js';
 import { router } from '../router.js';
 import { rememberPin, forgetPin } from './lock.js';
 import { avatarFor } from '../avatar.js';
+import * as storage from '../storage.js';
+import { bioFor, verifyBio, bioName } from '../bio.js';
 
 let hooks = { onUserChanged: () => {} };
 export function initWho(h2) { hooks = { ...hooks, ...h2 }; wire(); }
@@ -71,9 +73,26 @@ function leaveParent() {
   identity.setSession(null);
 }
 
+// With Face ID set up, switching to a kid keeps the parent's sign-in on the side ("parked") so
+// Face ID can bring the parent back without the PIN. Without Face ID, switching signs the parent out.
+const PARK = 'parkedSession';
+function parked(parentId) { const p = storage.get(PARK); return p && p.parent && p.parent.id === parentId ? p : null; }
+function dropParked(exceptToken) {
+  const p = storage.get(PARK);
+  if (p && p.token && p.token !== exceptToken) store.queue('logout', {}, { token: p.token, immediate: true });
+  storage.del(PARK);
+}
+
 function chooseKid(k) {
-  if (identity.session) forgetPin();
-  leaveParent();
+  const s = identity.session;
+  if (s && s.token && s.parent && bioFor(s.parent.id)) {
+    dropParked(s.token);
+    storage.set(PARK, s);
+    identity.setSession(null);
+  } else {
+    if (s) forgetPin();
+    leaveParent();
+  }
   identity.setUser({ role: 'kid', id: k.id, name: k.name, emoji: k.emoji || '' });
   hooks.onUserChanged();
   router.go('#/kid/' + encodeURIComponent(k.id));   // also closes the Who's here sheet
@@ -90,9 +109,40 @@ function openPin(p) {
   byId('pinError').hidden = true;
   byId('pinHint').hidden = !isDemo;
   byId('pinModal').classList.add('show');
-  setTimeout(() => byId('pinInput').focus(), 30);
+  const canBio = !!(parked(p.id) && bioFor(p.id));
+  const bb = byId('pinBio');
+  bb.hidden = !canBio;
+  bb.textContent = 'Use ' + bioName();
+  if (canBio) pinBio();                                 // straight from the tap, so iOS shows Face ID
+  else setTimeout(() => byId('pinInput').focus(), 30);
 }
 function closePin() { byId('pinModal').classList.remove('show'); pinFor = null; }
+
+let pinBioBusy = false;
+async function pinBio() {
+  const p = pinFor;
+  if (!p || pinBioBusy) return;
+  const saved = parked(p.id);
+  if (!saved) return;
+  pinBioBusy = true;
+  try {
+    if (!(await verifyBio(p.id)) || pinFor !== p) return;
+    storage.del(PARK);
+    identity.setSession(saved);
+    identity.setUser({ role: 'parent', id: saved.parent.id, name: saved.parent.name });
+    store.outbox.reauth(saved.parent.id, saved.token);
+    closePin();
+    closeSheets(false, true);
+    hooks.onUserChanged();
+    snackbar('Hi, ' + saved.parent.name + '!');
+    store.outbox.drain();
+  } catch (e) {
+    if (e && e.name !== 'NotAllowedError') { const err = byId('pinError'); err.hidden = false; err.textContent = bioName() + ' didn’t work — use your PIN'; }
+  } finally {
+    pinBioBusy = false;
+    if (byId('pinModal').classList.contains('show')) setTimeout(() => byId('pinInput').focus(), 30);
+  }
+}
 
 async function submitPin() {
   const p = pinFor;
@@ -107,6 +157,7 @@ async function submitPin() {
     const res = await api.call('login', { parentId: p.id, pin, deviceId: dev.id, deviceName: dev.name, token: null, user: null });
     const prev = identity.user;
     if (!(prev && prev.role === 'parent' && prev.id === res.parent.id)) leaveParent();
+    dropParked(res.token);
     identity.setSession({ token: res.token, parent: res.parent });
     identity.setUser({ role: 'parent', id: res.parent.id, name: res.parent.name });
     await rememberPin(res.parent.id, pin);
@@ -129,6 +180,7 @@ async function submitPin() {
 }
 
 export function signOut(message) {
+  dropParked();
   leaveParent();
   forgetPin();
   identity.setUser(null);
@@ -146,5 +198,6 @@ function wire() {
   byId('pinBtn').addEventListener('click', submitPin);
   byId('pinInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitPin(); });
   byId('pinCancel').addEventListener('click', closePin);
+  byId('pinBio').addEventListener('click', pinBio);
   byId('pinModal').addEventListener('click', (e) => { if (e.target === byId('pinModal')) closePin(); });
 }

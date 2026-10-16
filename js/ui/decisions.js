@@ -10,16 +10,18 @@ import { store } from '../store.js';
 const viewRef = () => store.view;
 
 const KEY = (kidId) => 'seenDecisions_' + kidId;
+const IDS = (kidId) => 'seenDecisionIds_' + kidId;    // ids already shown — a request is never shown twice
 const FIRST_LOOK_MS = 3 * 24 * 3600 * 1000;      // first time on this device: only the last few days
 let showing = null;
 
 export function unseenDecisions(view, kidId, now = Date.now()) {
   const mark = storage.get(KEY(kidId), null);
-  const since = mark ? Date.parse(mark) : now - FIRST_LOOK_MS;
+  const since = mark ? (typeof mark === 'number' ? mark : Date.parse(mark)) : now - FIRST_LOOK_MS;
+  const seen = new Set(storage.get(IDS(kidId), []));
   return view.transactions
     .filter(t => t.kidId === kidId && t.role === 'kid' && t.category !== 'Tithing' && t.actedAt
-      && (t.status === 'approved' || t.status === 'denied') && Date.parse(t.actedAt) > since)
-    .sort((a, b) => (a.actedAt < b.actedAt ? 1 : -1));
+      && (t.status === 'approved' || t.status === 'denied') && !seen.has(t.id) && !(Date.parse(t.actedAt) <= since))
+    .sort((a, b) => Date.parse(b.actedAt) - Date.parse(a.actedAt));
 }
 
 let timer = null;
@@ -32,14 +34,20 @@ export function maybeShowDecisions(view, kid) {
     if (!location.hash.includes(encodeURIComponent(kid.id)) && !location.hash.includes(kid.id)) return;
     const list = unseenDecisions(viewRef(), kid.id);
     if (!list.length) return;
-    showing = { kidId: kid.id, mark: list[0].actedAt };
+    showing = { kidId: kid.id, ids: list.map(t => t.id), mark: Math.max(...list.map(t => Date.parse(t.actedAt) || 0)) };
     render(list);
     openSheet('decisionSheet', { onClose: markSeen });
   }, 700);
 }
 
 function markSeen() {
-  if (showing) storage.set(KEY(showing.kidId), showing.mark);
+  if (showing) {
+    const prev = storage.get(KEY(showing.kidId), null);
+    const prevMs = prev == null ? 0 : (typeof prev === 'number' ? prev : Date.parse(prev) || 0);
+    if (showing.mark > prevMs) storage.set(KEY(showing.kidId), showing.mark);
+    const ids = [...new Set([...storage.get(IDS(showing.kidId), []), ...showing.ids])].slice(-200);
+    storage.set(IDS(showing.kidId), ids);
+  }
   showing = null;
 }
 

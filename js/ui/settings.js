@@ -87,7 +87,7 @@ function screenInfo() {
   const vh = probe('height:100vh').h, dvh = probe('height:100dvh').h, lvh = probe('height:100lvh').h;
   const ins = probe('height:0;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)');
   const vv = window.visualViewport ? Math.round(visualViewport.height) : '-';
-  return `screen ${screen.width}×${screen.height} · inner ${innerHeight} · vv ${vv} · vh ${vh}/${dvh}/${lvh} · inset ${ins.pt}/${ins.pb} · ${navigator.standalone ? 'app' : 'browser'}`;
+  return `screen ${screen.width}×${screen.height} · inner ${innerHeight} · vv ${vv} · vh ${vh}/${dvh}/${lvh} · inset ${ins.pt}/${ins.pb} · gap ${getComputedStyle(document.documentElement).getPropertyValue('--gap') || 0} · ${navigator.standalone ? 'app' : 'browser'}`;
 }
 
 function describe(o) {

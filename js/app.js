@@ -29,6 +29,27 @@ import { refreshTxCard, initTxCard } from './ui/txcard.js';
 import { initDecisions } from './ui/decisions.js';
 import { openAccount, openSettings, refreshSettings } from './ui/settings.js';
 
+// iOS 27 Home Screen apps: the page reports a screen ~62pt shorter (innerHeight / 100dvh) than it really
+// draws (100vh), so bottom-anchored things float high and leave a dead strip. When we see that gap,
+// size the phone layouts by 100vh and push bottom-anchored things down by the gap.
+export function fixViewport() {
+  const p = document.createElement('div');
+  p.style.cssText = 'position:fixed;left:0;top:0;width:0;height:100vh;visibility:hidden;pointer-events:none';
+  document.body.appendChild(p);
+  const vh = p.getBoundingClientRect().height;
+  p.remove();
+  const gap = navigator.standalone ? Math.round(vh - innerHeight) : 0;
+  const r = document.documentElement.style;
+  const on = gap > 20 && gap < 120;
+  document.documentElement.classList.toggle('vh-gap', on);
+  if (on) { r.setProperty('--app-h', '100vh'); r.setProperty('--gap', gap + 'px'); }
+  else { r.removeProperty('--app-h'); r.removeProperty('--gap'); }
+}
+fixViewport();
+addEventListener('resize', fixViewport);
+addEventListener('orientationchange', () => setTimeout(fixViewport, 300));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(fixViewport, 100); });
+
 /* ---------------- outbox ---------------- */
 const outbox = createOutbox({
   load: () => storage.get('outbox', []),

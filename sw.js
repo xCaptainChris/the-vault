@@ -1,6 +1,6 @@
 // The Vault service worker. VERSION must equal CONFIG.APP_VERSION in js/config.js (a test checks).
 // Bump both on every deploy. Never caches Apps Script calls (cross-origin is ignored).
-const VERSION = '1.1.7';
+const VERSION = '1.1.8';
 const CACHE = `vault-shell-${VERSION}`;
 const SHELL = [
   './index.html',
@@ -78,10 +78,9 @@ self.addEventListener('fetch', (event) => {
   // Only the app's own page is served from the shell; other pages (e.g. vault-demo.html) go to the network.
   const scopePath = new URL(self.registration.scope).pathname;
   if (req.mode === 'navigate' && (url.pathname === scopePath || url.pathname === scopePath + 'index.html')) {
-    event.respondWith((async () => {
-      const cached = await caches.match('./index.html', { ignoreSearch: true });
-      return cached || fetch(req);
-    })());
+    // Network first for the page itself, so Safari always shows the live index.html (with its current
+    // status-bar setting) — iOS copies that setting when the page is added to the Home Screen. Offline: cached copy.
+    event.respondWith(fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }).catch(async () => (await caches.match('./index.html', { ignoreSearch: true })) || Response.error()));
     return;
   }
   event.respondWith((async () => {

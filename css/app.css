@@ -468,17 +468,17 @@ html.app-locked .fab { display: none; }
   /* Cards share whatever height the phone gives (iOS sometimes hands web apps a shorter screen),
      so four always fit: each grows up to 172px and shrinks to 84px before the list ever scrolls. */
   html.home-page .cards { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 10px; }
-  html.home-page .bankcard { flex: 1 1 0; min-height: 84px; max-height: 172px; padding: 14px 16px; container-type: size; }
+  html.home-page .bankcard { flex: 1 1 0; min-height: 84px; max-height: 172px; padding: 14px 16px; }
   html.home-page .bankcard .kbal { font-size: 28px; line-height: 1.1; }
   html.home-page .bankcard .kgoal { position: absolute; right: 16px; top: 40px; max-width: 50%; }   /* top-right, under the card number: the bottom-right corner stays clear for the floating button */
   html.home-page .bankcard .pdot { right: auto; left: 50px; top: 12px; }   /* pending-request dot sits on the face like a badge */
 }
-/* Short cards (small phones, or more than four kids): face moves beside the name so everything still fits. */
-@container (max-height: 124px) {
-  .bankcard .kemoji { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 30px; line-height: 1; }
-  .bankcard .kfoot { padding-left: 60px; margin: auto 0; }
-  .bankcard .kname { font-size: 16px; line-height: 1.2; }
-  .bankcard .pdot { top: calc(50% - 26px); left: 52px; }
+/* Short phones (cards would be under ~125px): face moves beside the name so everything still fits. */
+@media (max-width: 639px) and (min-height: 600px) and (max-height: 760px) {
+  html.home-page .bankcard .kemoji { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 30px; line-height: 1; }
+  html.home-page .bankcard .kfoot { padding-left: 60px; margin: auto 0; }
+  html.home-page .bankcard .kname { font-size: 16px; line-height: 1.2; }
+  html.home-page .bankcard .pdot { top: calc(50% - 26px); left: 52px; }
 }
 
 /* v1.1.1: hero face + compact goal, pills, totals */

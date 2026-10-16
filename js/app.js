@@ -85,6 +85,27 @@ function render() {
   document.documentElement.classList.toggle('home-page', !onKid);
   refreshEntry(); refreshTxCard(); refreshApprovals(); refreshTithe(); refreshFamily(); refreshDonut(); refreshSettings(); refreshWho();
 }
+// Phone pages lock in place (no page scroll) — but only after launch: on the first tap or 1.5 s in, and
+// unlocked again while the app is in the background. iOS 27 sizes a Home Screen app from the page it
+// launches/resumes on; if that page can't scroll, the app gets a screen 62pt short for the whole session.
+let lockTimer = null;
+function settleLayout() {
+  clearTimeout(lockTimer); lockTimer = null;
+  if (document.documentElement.classList.contains('page-lock')) return;
+  document.documentElement.classList.add('page-lock');
+  window.scrollTo(0, 0);
+}
+function unsettleLayout() {
+  clearTimeout(lockTimer);
+  document.documentElement.classList.remove('page-lock');
+}
+addEventListener('pointerdown', settleLayout, { capture: true, passive: true });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) unsettleLayout();
+  else { clearTimeout(lockTimer); lockTimer = setTimeout(settleLayout, 1500); }
+});
+lockTimer = setTimeout(settleLayout, 1500);
+
 store.subscribe(render);
 router.onChange(() => render());
 

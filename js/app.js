@@ -145,6 +145,7 @@ setInterval(() => {
 /* ---------------- boot ---------------- */
 if (isDemo) window.__vault = { store, outbox, mock: mockHooks, selectors, api, identity, config: CONFIG };
 checkBio();
+
 render();
 registerServiceWorker((apply) => snackbar('Update ready', { action: 'Reload', onAction: apply, ms: Infinity }));
 if (!identity.device.name) showDeviceModal(false);

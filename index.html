@@ -37,8 +37,8 @@
         <div class="hero" id="kidHero" data-testid="kid-hero"></div>
         <div id="pillSlot"></div>
         <div class="split">
-          <button class="panel clickable" id="panelIn" data-testid="panel-in"><h3>Money in<span class="more">all time ›</span></h3><div class="ptot num in" id="totIn" data-testid="total-in"></div><div class="pcats" id="catIn"></div></button>
-          <button class="panel clickable" id="panelOut" data-testid="panel-out"><h3>Money out<span class="more">all time ›</span></h3><div class="ptot num out" id="totOut" data-testid="total-out"></div><div class="pcats" id="catOut"></div></button>
+          <button class="panel clickable" id="panelIn" data-testid="panel-in"><h3>Money in<span class="more">chart ›</span></h3><div id="catIn"></div></button>
+          <button class="panel clickable" id="panelOut" data-testid="panel-out"><h3>Money out<span class="more">chart ›</span></h3><div id="catOut"></div></button>
         </div>
       </div>
       <div class="colright">
@@ -62,8 +62,6 @@
 <div class="sheet" id="accountSheet" data-testid="account-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
 <div class="sheet" id="settingsSheet" data-testid="settings-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
 <div class="sheet popcard" id="kidTitheSheet" data-testid="kid-tithe-sheet" role="dialog" aria-modal="true"><button class="cardx" data-testid="kid-tithe-close" aria-label="Close">✕</button><div class="body"></div></div>
-<div class="sheet popcard" id="titheAskSheet" data-testid="tithe-ask-sheet" role="dialog" aria-modal="true"><div class="body"></div></div>
-<div class="sheet popcard" id="decisionSheet" data-testid="decision-sheet" role="dialog" aria-modal="true"><button class="cardx" data-testid="decision-close" aria-label="Close">✕</button><div class="body"></div></div>
 <div class="sheet popcard" id="txSheet" data-testid="tx-sheet" role="dialog" aria-modal="true"><button class="cardx" data-testid="tx-card-close" aria-label="Close">✕</button><div class="body"></div></div>
 <div class="sheet" id="avatarSheet" data-testid="avatar-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
 <div class="sheet" id="emojiSheet" data-testid="emoji-sheet" role="dialog" aria-modal="true"><div class="grip"></div><div class="body"></div></div>
@@ -86,7 +84,6 @@
     <input class="text-in num" id="pinInput" data-testid="pin-input" inputmode="numeric" type="password" placeholder="PIN" autocomplete="off" maxlength="12">
     <div class="errline" id="pinError" data-testid="pin-error" hidden></div>
     <button class="primary" id="pinBtn" data-testid="pin-submit">Unlock</button>
-    <button class="chip-btn lockbio" id="pinBio" data-testid="pin-bio" hidden>Use Face ID</button>
     <button class="cancel" id="pinCancel" data-testid="pin-cancel">Cancel</button>
     <div class="hint" id="pinHint" data-testid="pin-hint" hidden>Demo PINs: Dad 1234 · Mom 5678</div>
   </div>
@@ -100,7 +97,6 @@
     <input class="text-in num" id="lockInput" data-testid="lock-input" inputmode="numeric" type="password" placeholder="PIN" autocomplete="off" maxlength="12" aria-label="PIN">
     <div class="errline" id="lockError" data-testid="lock-error" hidden></div>
     <button class="primary" id="lockBtn" data-testid="lock-submit">Unlock</button>
-    <button class="chip-btn lockbio" id="lockBio" data-testid="lock-bio" hidden>Unlock with Face ID</button>
     <button class="cancel" id="lockSwitch" data-testid="lock-switch">Not you? Switch user</button>
   </div>
 </div>

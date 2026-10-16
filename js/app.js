@@ -25,6 +25,7 @@ import { refreshDonut } from './ui/donut.js';
 import { initWho, openWho, refreshWho, showDeviceModal, signOut } from './ui/who.js';
 import { initLock, lockNow, forgetPin } from './ui/lock.js';
 import { refreshTxCard, initTxCard } from './ui/txcard.js';
+import { initDecisions } from './ui/decisions.js';
 import { openAccount, openSettings, refreshSettings } from './ui/settings.js';
 
 /* ---------------- outbox ---------------- */
@@ -73,12 +74,14 @@ function render() {
 
   const u = identity.user;
   const fab = byId('fab');
-  fab.hidden = !u;
+  // A kid looking at a sibling's page has nothing to ask for there.
+  fab.hidden = !u || (!identity.isParent && onKid && r.kidId !== u.id);
   const parent = identity.isParent;
   fab.textContent = parent ? '＋ Add / Spend' : '＋ Ask';
   fab.classList.toggle('request', !parent);
 
   document.documentElement.classList.toggle('kid-page', onKid);
+  document.documentElement.classList.toggle('home-page', !onKid);
   refreshEntry(); refreshTxCard(); refreshApprovals(); refreshTithe(); refreshFamily(); refreshDonut(); refreshSettings(); refreshWho();
 }
 store.subscribe(render);
@@ -88,6 +91,7 @@ router.onChange(() => render());
 initSheets();
 initTxCard();
 initKidTithe();
+initDecisions();
 initWho({ onUserChanged: () => store.emit() });
 initLock({ onSwitchUser: () => signOut(), onSignedOut: (msg) => signOut(msg) });
 byId('fab').addEventListener('click', openEntryNew);

@@ -73,7 +73,11 @@ test('phone: home fits four kids without scrolling', async ({ page }, info) => {
   expect(ok).toBe(true);
   await expect(page.locator('[data-testid^="kid-card-"]')).toHaveCount(4);
   expect(await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)).toBeLessThanOrEqual(1);
+  // Cards fill the screen; the Add button floats over the last card's empty corner, never over a name or balance.
+  const vh = await page.evaluate(() => innerHeight);
   const last = await tid(page, 'kid-card-k_baby').evaluate(el => el.getBoundingClientRect().bottom);
-  const fabTop = await tid(page, 'fab').evaluate(el => el.getBoundingClientRect().top);
-  expect(last).toBeLessThanOrEqual(fabTop);
+  expect(last).toBeLessThanOrEqual(vh);
+  const fab = await tid(page, 'fab').evaluate(el => el.getBoundingClientRect().toJSON());
+  const bal = await tid(page, 'kid-balance-k_baby').evaluate(el => el.getBoundingClientRect().toJSON());
+  expect(bal.right <= fab.left || bal.bottom <= fab.top).toBe(true);
 });

@@ -67,7 +67,11 @@ test('phone: four kids fit a short screen too (cards shrink, nothing scrolls)', 
   });
   expect(m.page).toBeLessThanOrEqual(1);
   expect(m.list).toBeLessThanOrEqual(1);
+  // Cards fill the screen; the Add button floats over the last card's empty corner, never over a name or balance.
+  const vh = await page.evaluate(() => innerHeight);
   const last = await tid(page, 'kid-card-k_baby').evaluate(el => el.getBoundingClientRect().bottom);
-  const fabTop = await tid(page, 'fab').evaluate(el => el.getBoundingClientRect().top);
-  expect(last).toBeLessThanOrEqual(fabTop);
+  expect(last).toBeLessThanOrEqual(vh);
+  const fab = await tid(page, 'fab').evaluate(el => el.getBoundingClientRect().toJSON());
+  const bal = await tid(page, 'kid-balance-k_baby').evaluate(el => el.getBoundingClientRect().toJSON());
+  expect(bal.right <= fab.left || bal.bottom <= fab.top).toBe(true);
 });

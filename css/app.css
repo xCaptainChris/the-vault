@@ -176,7 +176,7 @@ header.app .spacer { flex: 1; }
 
 /* ---- FAB ---- */
 .fab {
-  position: fixed; right: 18px; bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 30;
+  position: fixed; right: 18px; bottom: calc(20px + env(safe-area-inset-bottom) - var(--gap, 0px)); z-index: 30;
   height: 56px; padding: 0 22px; border-radius: 99px; font-weight: 700; font-size: 16px;
   background: var(--credit); color: #0c0c10; box-shadow: 0 8px 24px rgba(76,217,100,.35);
   display: flex; align-items: center; gap: 8px;
@@ -192,7 +192,7 @@ header.app .spacer { flex: 1; }
 .scrim.show { opacity: 1; pointer-events: auto; touch-action: none; }
 .scrim { -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
 .sheet {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+  position: fixed; left: 0; right: 0; bottom: calc(0px - var(--gap, 0px)); z-index: 50;
   background: var(--card); border-radius: 24px 24px 0 0; border-top: 1px solid var(--line);
   padding: 10px 18px calc(22px + env(safe-area-inset-bottom));
   transform: translateY(105%); visibility: hidden;
@@ -432,7 +432,7 @@ html.app-locked .fab { display: none; }
 /* Phones: on a kid's page the page holds still and only History scrolls. */
 @media (max-width: 1023px) and (min-height: 640px) {
   html.kid-page, html.kid-page body { height: 100%; overflow: hidden; }
-  html.kid-page .wrap { height: 100dvh; display: flex; flex-direction: column; padding-bottom: 0; }
+  html.kid-page .wrap { height: var(--app-h, 100dvh); display: flex; flex-direction: column; padding-bottom: 0; }
   html.kid-page header.app { flex: none; }
   html.kid-page #view-kid.active { flex: 1; min-height: 0; display: flex; flex-direction: column; }
   html.kid-page #view-kid .back { flex: none; align-self: flex-start; }
@@ -461,7 +461,7 @@ html.app-locked .fab { display: none; }
 /* Phones: the family home holds still and fits four kids' cards without scrolling. */
 @media (max-width: 639px) and (min-height: 600px) {
   html.home-page, html.home-page body { height: 100%; overflow: hidden; }
-  html.home-page .wrap { height: 100dvh; display: flex; flex-direction: column; padding-bottom: 0; }
+  html.home-page .wrap { height: var(--app-h, 100dvh); display: flex; flex-direction: column; padding-bottom: 0; }
   html.home-page header.app { flex: none; }
   html.home-page #view-home.active { flex: 1; min-height: 0; display: flex; flex-direction: column; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }   /* cards run to the bottom; the button floats over the last one's empty corner */
   html.home-page #homeTop { flex: none; }
@@ -473,6 +473,9 @@ html.app-locked .fab { display: none; }
   html.home-page .bankcard .kgoal { position: absolute; right: 16px; top: 40px; max-width: 50%; }   /* top-right, under the card number: the bottom-right corner stays clear for the floating button */
   html.home-page .bankcard .pdot { right: auto; left: 50px; top: 12px; }   /* pending-request dot sits on the face like a badge */
 }
+/* iOS short-viewport bug: the fixed-height phone pages are pinned to the real screen so they reach the bottom. */
+html.vh-gap.kid-page .wrap, html.vh-gap.home-page .wrap { position: fixed; top: 0; left: 0; right: 0; }
+
 /* Short phones (cards would be under ~125px): face moves beside the name so everything still fits. */
 @media (max-width: 639px) and (min-height: 600px) and (max-height: 760px) {
   html.home-page .bankcard .kemoji { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 30px; line-height: 1; }
